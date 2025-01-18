@@ -1,0 +1,19 @@
+﻿<Window x:Class="NetworkImitator.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Graph App" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+            <Button Content="Добавить компьютер" Click="AddPcClick100"/>
+            <Button Content="Добавить сервер" Click="AddServer100"/>
+            <Button Content="Добавить ребро" Click="AddEdgeClick"/>
+        </StackPanel>
+    
+        <Canvas Name="ComponentsCanvas" Grid.Column="1" Background="LightGray" MouseMove="OnCanvasMouseMove"/>
+    </Grid>
+</Window>
