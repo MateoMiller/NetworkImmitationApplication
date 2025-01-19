@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Shapes;
 using NetworkImitator.NetworkComponents;
@@ -52,6 +53,22 @@ public class MainViewModel : INotifyPropertyChanged
             };
         }
     }
+    
+    private Component? selectedComponent;
+    public Component? SelectedComponent
+    {
+        get => selectedComponent;
+        set
+        {
+            selectedComponent = value;
+            OnPropertyChanged();
+        }
+    }
+    
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
     public void ConnectVertices(Ellipse secondVertex)
     {
@@ -70,6 +87,7 @@ public class MainViewModel : INotifyPropertyChanged
         UnselectVertex();
         selectedVertex = component;
         selectedVertex.IsSelected = true;
+        SelectedComponent = component;
         isDragging = true;
     }
 
@@ -80,6 +98,7 @@ public class MainViewModel : INotifyPropertyChanged
             selectedVertex.IsSelected = false;
             selectedVertex = null;
         }
+        SelectedComponent = null;
     }
 
 

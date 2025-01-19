@@ -9,14 +9,14 @@ public class Client : Component
     private readonly MainViewModel viewModel;
     private ClientState state = ClientState.ProcessingData;
     private TimeSpan timeSinceLastSendPacket = TimeSpan.Zero;
-    private readonly TimeSpan sendingPacketPeriod;
+    public int SendingPacketPeriod { get; set; }
 
     public Client(double x, double y, int sendingPacketPeriodInMs, MainViewModel viewModel)
     {
         this.viewModel = viewModel;
         X = x;
         Y = y;
-        sendingPacketPeriod = TimeSpan.FromMilliseconds(sendingPacketPeriodInMs);
+        SendingPacketPeriod = sendingPacketPeriodInMs;
     }
 
     public override BitmapImage Image => new(Images.PcImageUri);
@@ -40,7 +40,7 @@ public class Client : Component
         if (connection != null && state == ClientState.ProcessingData)
         {
             timeSinceLastSendPacket += elapsed;
-            if (timeSinceLastSendPacket >= sendingPacketPeriod)
+            if (timeSinceLastSendPacket.TotalMilliseconds >= SendingPacketPeriod)
             {
                 var transaction = new DataTransition()
                 {

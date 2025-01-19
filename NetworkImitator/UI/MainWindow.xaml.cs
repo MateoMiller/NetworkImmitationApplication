@@ -22,6 +22,7 @@ public partial class MainWindow : Window
     {
         _viewModel = new MainViewModel();
         InitializeComponent();
+        DataContext = _viewModel;
 
         _timer = new DispatcherTimer
         {
@@ -33,15 +34,8 @@ public partial class MainWindow : Window
     }
 
     private void AddPcClick100(object sender, RoutedEventArgs e) => AddPcClick(sender, e, 100);
-    private void AddPcClick200(object sender, RoutedEventArgs e) => AddPcClick(sender, e, 200);
-    private void AddPcClick300(object sender, RoutedEventArgs e) => AddPcClick(sender, e, 300);
-
 
     private void AddServer100(object sender, RoutedEventArgs e) => AddServerClick(sender, e, 100);
-    private void AddServer200(object sender, RoutedEventArgs e) => AddServerClick(sender, e, 200);
-    private void AddServer300(object sender, RoutedEventArgs e) => AddServerClick(sender, e, 300);
-
-
 
     private void AddPcClick(object sender, RoutedEventArgs e, int sendingPacketPeriodInMs)
     {

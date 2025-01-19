@@ -5,14 +5,15 @@ namespace NetworkImitator.NetworkComponents;
 
 public class Server : Component
 {
-    public Server(double x, double y, int timeToProcess)
+    public Server(double x, double y, int timeToProcessMs)
     {
         X = x;
         Y = y;
-        TimeToProcess = TimeSpan.FromMilliseconds(timeToProcess);
+        TimeToProcessMs = timeToProcessMs;
     }
+    
+    public int TimeToProcessMs { get; set; }
 
-    private TimeSpan TimeToProcess;
     private List<ProcessingProcess> Processing = new();
 
     public override BitmapImage Image => new(Images.ServerImageUri);
@@ -24,7 +25,7 @@ public class Server : Component
 
     public override void ReceiveData(DataTransition transition)
     {
-        Processing.Add(new(transition, TimeToProcess));
+        Processing.Add(new(transition, TimeSpan.FromMilliseconds(TimeToProcessMs)));
     }
 
     public override void ProcessTick(TimeSpan elapsed)
