@@ -33,20 +33,16 @@ public partial class MainWindow : Window
         Closed += (_, _) => _timer.Stop();
     }
 
-    private void AddPcClick100(object sender, RoutedEventArgs e) => AddPcClick(sender, e, 100);
-
-    private void AddServer100(object sender, RoutedEventArgs e) => AddServerClick(sender, e, 100);
-
-    private void AddPcClick(object sender, RoutedEventArgs e, int sendingPacketPeriodInMs)
+    private void AddPcClick(object sender, RoutedEventArgs e)
     {
-        var computer = new Client(100, 100, sendingPacketPeriodInMs, _viewModel);
+        var computer = new Client(100, 100, 100, _viewModel);
         _viewModel.AddVertex(computer);
         RedrawEverything();
     }
 
-    private void AddServerClick(object sender, RoutedEventArgs e, int timeToProcess)
+    private void AddServerClick(object sender, RoutedEventArgs e)
     {
-        var server = new Server(100, 100, timeToProcess);
+        var server = new Server(100, 100, 100);
         _viewModel.AddVertex(server);
         RedrawEverything();
     }
@@ -75,6 +71,13 @@ public partial class MainWindow : Window
         }
     }
 
+    private void AddLoadBalancerClick(object sender, RoutedEventArgs e)
+    {
+        var loadBalancer = new LoadBalancer(100, 100, LoadBalancerAlgorithm.RoundRobin);
+        _viewModel.AddVertex(loadBalancer);
+        RedrawEverything();
+    }
+    
     private void OnCanvasMouseMove(object sender, MouseEventArgs e)
     {
         var position = e.GetPosition(ComponentsCanvas);
@@ -91,17 +94,33 @@ public partial class MainWindow : Window
 
     private void OnTemplineMouseClicked(object sender, MouseButtonEventArgs e)
     {
+        Point clickPosition = e.GetPosition(ComponentsCanvas);
+
         VisualTreeHelper.HitTest(ComponentsCanvas, null, hitTestResult =>
         {
-            if (hitTestResult.VisualHit is Ellipse secondVertex)
+            if (hitTestResult.VisualHit is Ellipse targetEllipse && 
+                targetEllipse.DataContext is Component targetComponent && 
+                _viewModel.TempConnection != null)
             {
-                _viewModel.ConnectVertices(secondVertex);
+                if (_viewModel.TempConnection.FirstComponent != targetComponent)
+                {
+                    _viewModel.TempConnection.SecondComponent = targetComponent;
+
+                    if (_viewModel.TempConnection.FirstComponent is LoadBalancer loadBalancer &&
+                        targetComponent is Server server)
+                    {
+                        loadBalancer.AddServer(server);
+                    }
+
+                    _viewModel.Connections.Add(_viewModel.TempConnection);
+                    _viewModel.TempConnection = null;
+                }
+
                 return HitTestResultBehavior.Stop;
             }
 
             return HitTestResultBehavior.Continue;
-        }, new PointHitTestParameters(e.GetPosition(ComponentsCanvas)));
-
+        }, new PointHitTestParameters(clickPosition));
 
         RedrawEverything();
     }

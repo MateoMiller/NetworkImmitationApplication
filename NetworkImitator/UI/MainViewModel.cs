@@ -13,7 +13,7 @@ public class MainViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     public ObservableCollection<Component> Components { get; } = new();
     public ObservableCollection<Connection> Connections { get; } = new();
-    public Connection? TempConnection { get; private set; }
+    public Connection? TempConnection { get; set; }
 
     private Component? selectedVertex;
     private bool isDragging;
@@ -31,7 +31,17 @@ public class MainViewModel : INotifyPropertyChanged
             connection.ProcessTick(elapsed);
         }
     }
+    
+    public void AddLoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm)
+    {
+        var loadBalancer = new LoadBalancer(x, y, algorithm);
+        Components.Add(loadBalancer);
+    }
 
+    public void ConnectLoadBalancerToServer(LoadBalancer loadBalancer, Server server)
+    {
+        loadBalancer.AddServer(server);
+    }
 
     public void AddVertex(Component component)
     {
@@ -72,7 +82,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void ConnectVertices(Ellipse secondVertex)
     {
-        if (selectedVertex != null && TempConnection != null && secondVertex.DataContext is Component second)
+        if (selectedVertex != null && TempConnection != null && secondVertex.DataContext is Component second && second != selectedVertex)
         {
             TempConnection.TemporaryPosition = null;
             TempConnection.SecondComponent = second;

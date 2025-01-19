@@ -51,6 +51,7 @@ public class Client : Component
                         : connection.FirstComponent
                 };
                 connection.TransferData(transaction);
+                Console.WriteLine("Server" + SendingPacketPeriod);
                 state = ClientState.WaitingForResponse;
             }
         }

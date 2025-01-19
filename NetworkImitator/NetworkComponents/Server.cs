@@ -27,6 +27,11 @@ public class Server : Component
     {
         Processing.Add(new(transition, TimeSpan.FromMilliseconds(TimeToProcessMs)));
     }
+    
+    public int GetProcessingLoad()
+    {
+        return Processing.Count;
+    }
 
     public override void ProcessTick(TimeSpan elapsed)
     {
@@ -53,6 +58,7 @@ public class Server : Component
             };
             connection.TransferData(response);
             Processing.Remove(process);
+            Console.WriteLine("Server" + TimeToProcessMs);
         }
     }
 

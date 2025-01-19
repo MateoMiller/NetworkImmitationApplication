@@ -10,7 +10,6 @@ public class Connection
 
     public Component SecondComponent { get; set; }
 
-    //Чот костылём попахивает
     public Point? TemporaryPosition { get; set; }
     private DataTransition? currentTransition;
     private TimeSpan Elapsed = TimeSpan.Zero;

@@ -11,8 +11,9 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0">
-            <Button Content="Добавить компьютер" Click="AddPcClick100"/>
-            <Button Content="Добавить сервер" Click="AddServer100"/>
+            <Button Content="Добавить компьютер" Click="AddPcClick"/>
+            <Button Content="Добавить сервер" Click="AddServerClick"/>
+            <Button Content="Добавить балансировщик нагрузки" Click="AddLoadBalancerClick"/>
             <Button Content="Добавить ребро" Click="AddEdgeClick"/>
         </StackPanel>
     

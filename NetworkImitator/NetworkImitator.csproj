@@ -8,13 +8,15 @@
         <UseWPF>true</UseWPF>
     </PropertyGroup>
 
-
-
+    
     <ItemGroup>
       <None Update="Images\client.jpg">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="Images\server.jpg">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Images\loadBalancer.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
