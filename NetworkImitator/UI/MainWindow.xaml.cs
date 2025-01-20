@@ -33,26 +33,6 @@ public partial class MainWindow : Window
         Closed += (_, _) => _timer.Stop();
     }
 
-    private void AddPcClick(object sender, RoutedEventArgs e)
-    {
-        var computer = new Client(100, 100, 100, _viewModel);
-        _viewModel.AddVertex(computer);
-        RedrawEverything();
-    }
-
-    private void AddServerClick(object sender, RoutedEventArgs e)
-    {
-        var server = new Server(100, 100, 100);
-        _viewModel.AddVertex(server);
-        RedrawEverything();
-    }
-
-    private void AddEdgeClick(object sender, RoutedEventArgs e)
-    {
-        _viewModel.AddEdge();
-        RedrawEverything();
-    }
-
     private void TimerTick(object sender, EventArgs e)
     {
         _viewModel.Update(UpdateUITime);
@@ -61,7 +41,7 @@ public partial class MainWindow : Window
 
     private void OnEllipseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.Source is Ellipse ellipse && ellipse.DataContext is Component vertexModel)
+        if (e.Source is Ellipse { DataContext: Component vertexModel })
         {
             if (vertexModel.IsSelected)
                 _viewModel.UnselectVertex();
@@ -71,13 +51,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void AddLoadBalancerClick(object sender, RoutedEventArgs e)
-    {
-        var loadBalancer = new LoadBalancer(100, 100, LoadBalancerAlgorithm.RoundRobin);
-        _viewModel.AddVertex(loadBalancer);
-        RedrawEverything();
-    }
-    
     private void OnCanvasMouseMove(object sender, MouseEventArgs e)
     {
         var position = e.GetPosition(ComponentsCanvas);
@@ -94,13 +67,14 @@ public partial class MainWindow : Window
 
     private void OnTemplineMouseClicked(object sender, MouseButtonEventArgs e)
     {
-        Point clickPosition = e.GetPosition(ComponentsCanvas);
+        if (_viewModel.TempConnection == null)
+            return;
+
+        var clickPosition = e.GetPosition(ComponentsCanvas);
 
         VisualTreeHelper.HitTest(ComponentsCanvas, null, hitTestResult =>
         {
-            if (hitTestResult.VisualHit is Ellipse targetEllipse && 
-                targetEllipse.DataContext is Component targetComponent && 
-                _viewModel.TempConnection != null)
+            if (hitTestResult.VisualHit is Ellipse { DataContext: Component targetComponent })
             {
                 if (_viewModel.TempConnection.FirstComponent != targetComponent)
                 {
@@ -131,7 +105,7 @@ public partial class MainWindow : Window
 
         foreach (var vertex in _viewModel.Components)
         {
-            Ellipse ellipse = new Ellipse
+            var ellipse = new Ellipse
             {
                 Width = 50,
                 Height = 50,
@@ -148,7 +122,7 @@ public partial class MainWindow : Window
 
         foreach (var edge in _viewModel.Connections)
         {
-            Line line = new Line
+            var line = new Line
             {
                 X1 = edge.FirstComponent.X,
                 Y1 = edge.FirstComponent.Y,
@@ -156,14 +130,14 @@ public partial class MainWindow : Window
                 Y2 = edge.SecondComponent.Y,
                 Stroke = edge.GetBrush(),
                 StrokeThickness = 2,
+                DataContext = edge
             };
-            line.DataContext = edge;
             ComponentsCanvas.Children.Add(line);
         }
 
         if (_viewModel.TempConnection != null)
         {
-            Line line = new Line
+            var line = new Line
             {
                 X1 = _viewModel.TempConnection.FirstComponent.X,
                 Y1 = _viewModel.TempConnection.FirstComponent.Y,
@@ -176,5 +150,56 @@ public partial class MainWindow : Window
             line.DataContext = _viewModel.TempConnection;
             ComponentsCanvas.Children.Add(line);
         }
+    }
+}
+
+public abstract class CommandBase(MainViewModel viewModel) : ICommand
+{
+    protected readonly MainViewModel ViewModel = viewModel;
+
+    public event EventHandler? CanExecuteChanged;
+
+    public virtual bool CanExecute(object parameter) => true;
+
+    public void Execute(object parameter)
+    {
+        Execute();
+    }
+
+    protected abstract void Execute();
+}
+
+public class AddClientCommand(MainViewModel viewModel) : CommandBase(viewModel)
+{
+    protected override void Execute()
+    {
+        var client = new Client(100, 100, 100, ViewModel);
+        ViewModel.AddVertex(client);
+    }
+}
+
+public class AddServerCommand(MainViewModel viewModel) : CommandBase(viewModel)
+{
+    protected override void Execute()
+    {
+        var server = new Server(100, 100, 100);
+        ViewModel.AddVertex(server);
+    }
+}
+
+public class AddLoadBalancerCommand(MainViewModel viewModel, LoadBalancerAlgorithm algorithm) : CommandBase(viewModel)
+{
+    protected override void Execute()
+    {
+        var loadBalancer = new LoadBalancer(100, 100, algorithm);
+        ViewModel.AddVertex(loadBalancer);
+    }
+}
+
+public class AddConnectionCommand(MainViewModel viewModel) : CommandBase(viewModel)
+{
+    protected override void Execute()
+    {
+        ViewModel.AddEdge();
     }
 }

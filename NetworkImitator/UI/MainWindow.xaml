@@ -11,10 +11,11 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Grid.Column="0">
-            <Button Content="Добавить компьютер" Click="AddPcClick"/>
-            <Button Content="Добавить сервер" Click="AddServerClick"/>
-            <Button Content="Добавить балансировщик нагрузки" Click="AddLoadBalancerClick"/>
-            <Button Content="Добавить ребро" Click="AddEdgeClick"/>
+            <Button Content="Добавить компьютер" Command="{Binding AddClientCommand}"/>
+            <Button Content="Добавить сервер" Command="{Binding AddServerCommand}"/>
+            <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}"/>
+            <Button Content="Добавить ребро" Command="{Binding AddConnectionCommand}"/>
+
         </StackPanel>
     
         <Canvas Name="ComponentsCanvas" Grid.Column="1" Background="LightGray" MouseMove="OnCanvasMouseMove"/>

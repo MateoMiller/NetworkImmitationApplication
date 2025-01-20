@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Shapes;
+using System.Windows.Input;
 using NetworkImitator.NetworkComponents;
 using Component = NetworkImitator.NetworkComponents.Component;
 
@@ -32,15 +32,17 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
     
-    public void AddLoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm)
-    {
-        var loadBalancer = new LoadBalancer(x, y, algorithm);
-        Components.Add(loadBalancer);
-    }
+    public ICommand AddClientCommand { get; }
+    public ICommand AddServerCommand { get; }
+    public ICommand AddLoadBalancerCommand { get; }
+    public ICommand AddConnectionCommand { get; }
 
-    public void ConnectLoadBalancerToServer(LoadBalancer loadBalancer, Server server)
+    public MainViewModel()
     {
-        loadBalancer.AddServer(server);
+        AddClientCommand = new AddClientCommand(this);
+        AddServerCommand = new AddServerCommand(this);
+        AddLoadBalancerCommand = new AddLoadBalancerCommand(this, LoadBalancerAlgorithm.RoundRobin);
+        AddConnectionCommand = new AddConnectionCommand(this);
     }
 
     public void AddVertex(Component component)
@@ -80,18 +82,6 @@ public class MainViewModel : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public void ConnectVertices(Ellipse secondVertex)
-    {
-        if (selectedVertex != null && TempConnection != null && secondVertex.DataContext is Component second && second != selectedVertex)
-        {
-            TempConnection.TemporaryPosition = null;
-            TempConnection.SecondComponent = second;
-            Connections.Add(TempConnection);
-        }
-
-        TempConnection = null;
-    }
-
     public void SelectVertex(Component component)
     {
         UnselectVertex();
@@ -118,11 +108,6 @@ public class MainViewModel : INotifyPropertyChanged
         {
             TempConnection.TemporaryPosition = position;
         }
-    }
-
-    public void RemoveTempLine(Point position)
-    {
-        TempConnection = null;
     }
 
     public void EndDragging()

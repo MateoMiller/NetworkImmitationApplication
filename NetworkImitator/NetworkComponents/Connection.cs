@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 using Point = System.Windows.Point;
 
 namespace NetworkImitator.NetworkComponents;
