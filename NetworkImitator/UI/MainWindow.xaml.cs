@@ -30,6 +30,8 @@ public partial class MainWindow : Window
         };
         _timer.Tick += TimerTick;
         _timer.Start();
+        KeyDown += OnKeyDown;
+        Loaded += (_, _) => Keyboard.Focus(this);
         Closed += (_, _) => _timer.Stop();
     }
 
@@ -76,20 +78,7 @@ public partial class MainWindow : Window
         {
             if (hitTestResult.VisualHit is Ellipse { DataContext: Component targetComponent })
             {
-                if (_viewModel.TempConnection.FirstComponent != targetComponent)
-                {
-                    _viewModel.TempConnection.SecondComponent = targetComponent;
-
-                    if (_viewModel.TempConnection.FirstComponent is LoadBalancer loadBalancer &&
-                        targetComponent is Server server)
-                    {
-                        loadBalancer.AddServer(server);
-                    }
-
-                    _viewModel.Connections.Add(_viewModel.TempConnection);
-                    _viewModel.TempConnection = null;
-                }
-
+                _viewModel.FinishConnection(targetComponent);
                 return HitTestResultBehavior.Stop;
             }
 
@@ -97,6 +86,16 @@ public partial class MainWindow : Window
         }, new PointHitTestParameters(clickPosition));
 
         RedrawEverything();
+    }
+    
+    private void OnKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            _viewModel.UnselectVertex();
+            _viewModel.TempConnection = null;
+            RedrawEverything();
+        }
     }
 
     private void RedrawEverything()

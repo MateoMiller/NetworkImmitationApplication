@@ -1,5 +1,6 @@
 ﻿using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using NetworkImitator.Extensions;
 
 namespace NetworkImitator.NetworkComponents;
 
@@ -23,9 +24,9 @@ public class Server : Component
         return Processing.Count == 0 ? Brushes.Aquamarine : Brushes.Maroon;
     }
 
-    public override void ReceiveData(DataTransition transition)
+    public override void ReceiveData(Message message)
     {
-        Processing.Add(new(transition, TimeSpan.FromMilliseconds(TimeToProcessMs)));
+        Processing.Add(new(message, TimeSpan.FromMilliseconds(TimeToProcessMs)));
     }
     
     public int GetProcessingLoad()
@@ -46,25 +47,18 @@ public class Server : Component
         var rnd = new Random();
         foreach (var process in finished)
         {
-            var bytes = new byte[rnd.Next(500, 1000)];
-            var connection = process.DataTransition.Connection;
-            rnd.NextBytes(bytes);
-            var receiver = connection.FirstComponent != this ? connection.FirstComponent : connection.SecondComponent;
-            var response = new DataTransition()
-            {
-                Connection = process.DataTransition.Connection,
-                Content = bytes,
-                Reciever = receiver
-            };
-            connection.TransferData(response);
+            var toIp = process.Message.FromIP;
+            var connection = Connections.First(x => x.GetComponent(toIp) != null);
+            var content = rnd.RandomString(500);
+            connection.TransferData(new Message(IP, toIp, content));
+
             Processing.Remove(process);
-            Console.WriteLine("Server" + TimeToProcessMs);
         }
     }
 
-    private class ProcessingProcess(DataTransition dataTransition, TimeSpan timeToProcess)
+    private class ProcessingProcess(Message message, TimeSpan timeToProcess)
     {
-        public DataTransition DataTransition { get; set; } = dataTransition;
+        public Message Message { get; set; } = message;
         public TimeSpan TimeToProcess { get; } = timeToProcess;
         public TimeSpan Elapsed { get; set; } = TimeSpan.Zero;
     }

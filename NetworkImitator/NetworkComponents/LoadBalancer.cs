@@ -28,7 +28,7 @@ namespace NetworkImitator.NetworkComponents
             servers.Add(server);
         }
 
-        public override void ReceiveData(DataTransition transition)
+        public override void ReceiveData(Message message)
         {
             if (servers.Count == 0)
             {
@@ -36,11 +36,15 @@ namespace NetworkImitator.NetworkComponents
                 return;
             }
 
+            //TODO
+            //1 -> 2 -> 3 -> 4
+            //4 -> 3 -> 2 -> 1
+            
             var server = SelectServer();
             if (server != null)
             {
                 Console.WriteLine($"LoadBalancer: Forwarding data to server at ({server.X}, {server.Y})");
-                server.ReceiveData(transition);
+                server.ReceiveData(message);
             }
         }
 

@@ -25,7 +25,6 @@ public class MainViewModel : INotifyPropertyChanged
             component.ProcessTick(elapsed);
         }
 
-
         foreach (var connection in Connections)
         {
             connection.ProcessTick(elapsed);
@@ -114,6 +113,21 @@ public class MainViewModel : INotifyPropertyChanged
     {
         isDragging = false;
     }
+
+    public void FinishConnection(Component targetComponent)
+    {
+        if (TempConnection == null || targetComponent == TempConnection.FirstComponent)
+            return;
+
+        TempConnection.SecondComponent = targetComponent;
+
+        TempConnection.FirstComponent.ConnectTo(TempConnection);
+        TempConnection.SecondComponent.ConnectTo(TempConnection);
+
+        Connections.Add(TempConnection);
+        TempConnection = null;
+    }
+
 
     public void DragSelectedVerticle(Point position)
     {
