@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using NetworkImitator.NetworkComponents;
 using Component = NetworkImitator.NetworkComponents.Component;
 
@@ -126,15 +127,5 @@ public class MainViewModel : INotifyPropertyChanged
 
         Connections.Add(TempConnection);
         TempConnection = null;
-    }
-
-
-    public void DragSelectedVerticle(Point position)
-    {
-        if (isDragging && selectedVertex != null)
-        {
-            selectedVertex.X = position.X;
-            selectedVertex.Y = position.Y;
-        }
     }
 }

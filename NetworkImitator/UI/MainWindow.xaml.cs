@@ -37,6 +37,7 @@ public partial class MainWindow : Window
 
     private void TimerTick(object sender, EventArgs e)
     {
+        //Можно сделать await Task.Run(() => _viewModel.Update(UpdateUITime));
         _viewModel.Update(UpdateUITime);
         RedrawEverything();
     }
@@ -56,7 +57,6 @@ public partial class MainWindow : Window
     private void OnCanvasMouseMove(object sender, MouseEventArgs e)
     {
         var position = e.GetPosition(ComponentsCanvas);
-        _viewModel.DragSelectedVerticle(position);
         _viewModel.UpdateTempLine(position);
         RedrawEverything();
     }
@@ -100,8 +100,9 @@ public partial class MainWindow : Window
 
     private void RedrawEverything()
     {
-        ComponentsCanvas.Children.Clear();
+        //ComponentsCanvas.Children.Clear();
 
+        /*
         foreach (var vertex in _viewModel.Components)
         {
             var ellipse = new Ellipse
@@ -149,6 +150,8 @@ public partial class MainWindow : Window
             line.DataContext = _viewModel.TempConnection;
             ComponentsCanvas.Children.Add(line);
         }
+        
+        */
     }
 }
 

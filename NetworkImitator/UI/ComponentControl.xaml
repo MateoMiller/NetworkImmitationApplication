@@ -1,0 +1,13 @@
+﻿<UserControl x:Class="NetworkImitator.UI.ComponentControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:NetworkImitator.UI"
+             Width="50" Height="50"
+             MouseLeftButtonDown="OnMouseLeftButtonDown"
+             MouseMove="OnMouseMove"
+             MouseLeftButtonUp="OnMouseLeftButtonUp">
+    <Ellipse Name="ComponentEllipse" Width="50" Height="50"
+             Fill="{Binding Converter={StaticResource ComponentToBrushConverter}}"
+             Stroke="{Binding IsSelected, Converter={StaticResource SelectionToBrushConverter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+    />
+</UserControl>
