@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents;
 
@@ -14,6 +15,9 @@ public abstract class Component : INotifyPropertyChanged
     public List<Connection> Connections { get; } = new();
 
     public abstract BitmapImage Image { get; }
+
+    public MainViewModel MainViewModel { get; }
+
     public abstract Brush GetBrush();
     private bool _isSelected;
     public bool IsSelected
@@ -31,6 +35,13 @@ public abstract class Component : INotifyPropertyChanged
 
     private double _x;
     private double _y;
+
+    protected Component(MainViewModel mainViewModel, double x, double y)
+    {
+        MainViewModel = mainViewModel;
+        X = x;
+        Y = y;
+    }
 
     public double X
     {

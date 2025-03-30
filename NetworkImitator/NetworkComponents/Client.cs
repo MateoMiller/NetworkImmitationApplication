@@ -7,14 +7,12 @@ namespace NetworkImitator.NetworkComponents;
 
 public class Client : Component
 {
-    private readonly MainViewModel viewModel;
     private ClientState state = ClientState.ProcessingData;
     private TimeSpan timeSinceLastSendPacket = TimeSpan.Zero;
     public int SendingPacketPeriod { get; set; }
 
-    public Client(double x, double y, int sendingPacketPeriodInMs, MainViewModel viewModel)
+    public Client(double x, double y, int sendingPacketPeriodInMs, MainViewModel viewModel) : base(viewModel, x, y)
     {
-        this.viewModel = viewModel;
         X = x;
         Y = y;
         SendingPacketPeriod = sendingPacketPeriodInMs;

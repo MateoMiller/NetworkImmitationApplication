@@ -1,15 +1,14 @@
 ﻿using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using NetworkImitator.Extensions;
+using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents;
 
 public class Server : Component
 {
-    public Server(double x, double y, int timeToProcessMs)
+    public Server(double x, double y, int timeToProcessMs, MainViewModel viewModel) : base(viewModel, x, y)
     {
-        X = x;
-        Y = y;
         TimeToProcessMs = timeToProcessMs;
     }
     

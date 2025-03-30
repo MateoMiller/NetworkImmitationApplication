@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using NetworkImitator.NetworkComponents;
 using Component = NetworkImitator.NetworkComponents.Component;
 
@@ -84,21 +83,20 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void SelectVertex(Component component)
     {
-        UnselectVertex();
+        UnselectVertex(SelectedComponent);
         selectedVertex = component;
         selectedVertex.IsSelected = true;
         SelectedComponent = component;
         isDragging = true;
     }
 
-    public void UnselectVertex()
+    public void UnselectVertex(Component? component)
     {
-        if (selectedVertex != null)
+        if (selectedVertex == component && selectedVertex != null)
         {
             selectedVertex.IsSelected = false;
-            selectedVertex = null;
+            SelectedComponent = null;
         }
-        SelectedComponent = null;
     }
 
 
@@ -108,11 +106,6 @@ public class MainViewModel : INotifyPropertyChanged
         {
             TempConnection.TemporaryPosition = position;
         }
-    }
-
-    public void EndDragging()
-    {
-        isDragging = false;
     }
 
     public void FinishConnection(Component targetComponent)

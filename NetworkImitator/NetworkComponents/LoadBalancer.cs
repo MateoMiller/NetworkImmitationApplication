@@ -1,5 +1,6 @@
 ﻿using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents
 {
@@ -9,10 +10,8 @@ namespace NetworkImitator.NetworkComponents
         private int currentServerIndex;
         private readonly LoadBalancerAlgorithm algorithm;
 
-        public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm = LoadBalancerAlgorithm.RoundRobin)
+        public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm, MainViewModel viewModel) : base(viewModel, x, y)
         {
-            X = x;
-            Y = y;
             this.algorithm = algorithm;
         }
 

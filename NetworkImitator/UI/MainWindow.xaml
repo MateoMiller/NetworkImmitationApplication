@@ -3,15 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:networkComponents="clr-namespace:NetworkImitator.NetworkComponents"
         xmlns:ui="clr-namespace:NetworkImitator.UI"
-        Title="Graph App" Height="450" Width="1000">
+        Title="Graph App" Height="600" Width="1200">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition/>
-            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="250"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0">
+        <StackPanel Grid.Column="1">
             <Button Content="Добавить компьютер" Command="{Binding AddClientCommand}"/>
             <Button Content="Добавить сервер" Command="{Binding AddServerCommand}"/>
             <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}"/>
@@ -19,7 +19,7 @@
 
         </StackPanel>
     
-        <Canvas Name="ComponentsCanvas" Grid.Column="1" Background="LightGray" MouseMove="OnCanvasMouseMove">
+        <Canvas Name="ComponentsCanvas" Grid.Column="0" Background="LightGray" MouseMove="OnCanvasMouseMove">
             <ItemsControl ItemsSource="{Binding Components}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -34,7 +34,7 @@
                 </ItemsControl.ItemContainerStyle>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Component}">
-                        <ui:ComponentControl Component="{Binding}" />
+                        <ui:ComponentControl Component="{Binding }" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>       
