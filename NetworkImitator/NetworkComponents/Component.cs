@@ -1,17 +1,19 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
+using NetworkImitator.Extensions;
 using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents;
 
-public abstract class Component : INotifyPropertyChanged
+public abstract partial class Component : ObservableObject
 {
-    public string IP { get; set; }
+    [ObservableProperty] private string _iP;
+    [ObservableProperty] private string _deviceName;
+    [ObservableProperty] private double _x;
+    [ObservableProperty] private double _y;
+    [ObservableProperty] private bool _isSelected;
 
-    public string DeviceName { get; set; }
-    
     public List<Connection> Connections { get; } = new();
 
     public abstract BitmapImage Image { get; }
@@ -19,51 +21,17 @@ public abstract class Component : INotifyPropertyChanged
     public MainViewModel MainViewModel { get; }
 
     public abstract Brush GetBrush();
-    private bool _isSelected;
-    public bool IsSelected
-    {
-        get => _isSelected;
-        set
-        {
-            if (_isSelected != value)
-            {
-                _isSelected = value;
-                OnPropertyChanged();
-            }
-        }
-    }
 
-    private double _x;
-    private double _y;
 
     protected Component(MainViewModel mainViewModel, double x, double y)
     {
         MainViewModel = mainViewModel;
         X = x;
         Y = y;
+        IP = RandomExtensions.RandomIp();
+        DeviceName = RandomExtensions.RandomWord();
     }
 
-    public double X
-    {
-        get => _x;
-        set
-        {
-            if (_x != value)
-            {
-                _x = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-    public double Y { get => _y;
-        set
-        {
-            if (_y != value)
-            {
-                _y = value;
-                OnPropertyChanged();
-            }
-        }}
 
     public void ConnectTo(Connection connection)
     {
@@ -75,9 +43,4 @@ public abstract class Component : INotifyPropertyChanged
 
     public abstract void ReceiveData(Message currentMessage);
 
-    public event PropertyChangedEventHandler PropertyChanged;
-    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
 }

@@ -40,20 +40,30 @@
             </ItemsControl>       
         </Canvas>
         
-        <StackPanel Grid.Column="2" Margin="10" Name="SelectedComponentSettings">
+        <StackPanel Grid.Column="2" Margin="10">
             <TextBlock Text="Настройки компонента" FontWeight="Bold" FontSize="16"/>
             <ContentControl Content="{Binding SelectedComponent}">
                 <ContentControl.Resources>
+                    <DataTemplate x:Key="CommonIPAddressTemplate">
+                        <StackPanel>
+                            <TextBlock Text="IP адрес"/>
+                            <TextBox Text="{Binding IP, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
+                            <TextBlock Text="Имя компонента"/>
+                            <TextBox Text="{Binding DeviceName, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Client}">
                         <StackPanel>
                             <TextBlock Text="Период отправки пакетов:"/>
                             <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" />
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIPAddressTemplate}" />
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Server}">
                         <StackPanel>
                             <TextBlock Text="Время обработки:"/>
                             <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" />
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIPAddressTemplate}" />
                         </StackPanel>
                     </DataTemplate>
                 </ContentControl.Resources>

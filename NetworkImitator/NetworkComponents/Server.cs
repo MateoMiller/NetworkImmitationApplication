@@ -48,7 +48,7 @@ public class Server : Component
         {
             var toIp = process.Message.FromIP;
             var connection = Connections.First(x => x.GetComponent(toIp) != null);
-            var content = rnd.RandomString(500);
+            var content = RandomExtensions.RandomWord();
             connection.TransferData(new Message(IP, toIp, content));
 
             Processing.Remove(process);

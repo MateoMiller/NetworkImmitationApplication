@@ -39,7 +39,7 @@ public class Client : Component
                     foreach (var connection in Connections)
                     {
                         var receiver = connection.GetOppositeComponent(IP);
-                        var msg = new Message(IP, receiver!.IP, rnd.RandomString(500));
+                        var msg = new Message(IP, receiver!.IP, RandomExtensions.RandomWord());
                 
                         connection.TransferData(msg);
                         
