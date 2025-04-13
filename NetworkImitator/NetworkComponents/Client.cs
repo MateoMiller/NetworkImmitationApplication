@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Windows.Media.Imaging;
 using NetworkImitator.Extensions;
 using NetworkImitator.UI;
 
@@ -20,18 +19,12 @@ public class Client : Component
 
     public override BitmapImage Image => new(Images.PcImageUri);
 
-    public override Brush GetBrush()
-    {
-        return state == ClientState.ProcessingData ? Brushes.Chartreuse : Brushes.Fuchsia;
-    }
-
     public override void ProcessTick(TimeSpan elapsed)
     {
         switch (state)
         {
             case ClientState.ProcessingData:
                 timeSinceLastSendPacket += elapsed;
-                var rnd = new Random();
                 if (timeSinceLastSendPacket.TotalMilliseconds >= SendingPacketPeriod)
                 {
                     timeSinceLastSendPacket = TimeSpan.Zero;

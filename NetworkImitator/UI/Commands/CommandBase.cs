@@ -1,6 +1,6 @@
 ﻿using System.Windows.Input;
 
-namespace NetworkImitator.UI;
+namespace NetworkImitator.UI.Commands;
 
 public abstract class CommandBase(MainViewModel viewModel) : ICommand
 {
@@ -8,9 +8,9 @@ public abstract class CommandBase(MainViewModel viewModel) : ICommand
 
     public event EventHandler? CanExecuteChanged;
 
-    public virtual bool CanExecute(object parameter) => true;
+    public virtual bool CanExecute(object? parameter) => true;
 
-    public void Execute(object parameter)
+    public void Execute(object? parameter)
     {
         Execute();
     }

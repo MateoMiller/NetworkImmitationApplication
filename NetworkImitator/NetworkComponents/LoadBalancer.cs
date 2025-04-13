@@ -1,13 +1,12 @@
-﻿using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Windows.Media.Imaging;
 using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents
 {
     public class LoadBalancer : Component
     {
-        private readonly List<Server> servers = new();
         private int currentServerIndex;
+        private readonly List<Server> _servers = [];
         private readonly LoadBalancerAlgorithm algorithm;
 
         public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm, MainViewModel viewModel) : base(viewModel, x, y)
@@ -17,19 +16,9 @@ namespace NetworkImitator.NetworkComponents
 
         public override BitmapImage Image => new(Images.LoadBalancerUri);
 
-        public override Brush GetBrush()
-        {
-            return servers.Count > 0 ? Brushes.LightBlue : Brushes.Gray;
-        }
-
-        public void AddServer(Server server)
-        {
-            servers.Add(server);
-        }
-
         public override void ReceiveData(Message message)
         {
-            if (servers.Count == 0)
+            if (_servers.Count == 0)
             {
                 Console.WriteLine("LoadBalancer: No servers available to handle the request.");
                 return;
@@ -62,16 +51,16 @@ namespace NetworkImitator.NetworkComponents
 
         private Server? SelectRoundRobin()
         {
-            if (servers.Count == 0) 
+            if (_servers.Count == 0) 
                 return null;
-            var server = servers[currentServerIndex];
-            currentServerIndex = (currentServerIndex + 1) % servers.Count;
+            var server = _servers[currentServerIndex];
+            currentServerIndex = (currentServerIndex + 1) % _servers.Count;
             return server;
         }
 
         private Server? SelectLeastConnections()
         {
-            return servers.OrderBy(s => s.GetProcessingLoad()).FirstOrDefault();
+            return _servers.OrderBy(s => s.GetProcessingLoad()).FirstOrDefault();
         }
     }
 }

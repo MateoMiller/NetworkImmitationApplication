@@ -3,20 +3,19 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using NetworkImitator.NetworkComponents;
 using Component = NetworkImitator.NetworkComponents.Component;
 
 namespace NetworkImitator.UI;
 
-public class MainViewModel : INotifyPropertyChanged
+public partial class MainViewModel : ObservableObject
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
-    public ObservableCollection<Component> Components { get; } = new();
-    public ObservableCollection<Connection> Connections { get; } = new();
+    public ObservableCollection<Component> Components { get; } = [];
+    public ObservableCollection<Connection> Connections { get; } = [];
     public Connection? TempConnection { get; set; }
-
-    private Component? selectedVertex;
-    private bool isDragging;
+    
+    [ObservableProperty] private Component? _selectedComponent;
 
     public void Update(TimeSpan elapsed)
     {
@@ -51,7 +50,7 @@ public class MainViewModel : INotifyPropertyChanged
 
     public void AddEdge()
     {
-        if (selectedVertex == null)
+        if (SelectedComponent == null)
         {
             MessageBox.Show("Выберите первую вершину для соединения");
         }
@@ -59,46 +58,27 @@ public class MainViewModel : INotifyPropertyChanged
         {
             TempConnection = new Connection
             {
-                FirstComponent = selectedVertex,
-                TemporaryPosition = new Point(selectedVertex.X, selectedVertex.Y)
+                FirstComponent = SelectedComponent,
+                TemporaryPosition = new Point(SelectedComponent.X, SelectedComponent.Y)
             };
         }
-    }
-    
-    private Component? selectedComponent;
-    public Component? SelectedComponent
-    {
-        get => selectedComponent;
-        set
-        {
-            selectedComponent = value;
-            OnPropertyChanged();
-        }
-    }
-    
-    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public void SelectVertex(Component component)
     {
         UnselectVertex(SelectedComponent);
-        selectedVertex = component;
-        selectedVertex.IsSelected = true;
         SelectedComponent = component;
-        isDragging = true;
+        SelectedComponent.IsSelected = true;
     }
 
     public void UnselectVertex(Component? component)
     {
-        if (selectedVertex == component && selectedVertex != null)
+        if (SelectedComponent == component && SelectedComponent != null)
         {
-            selectedVertex.IsSelected = false;
+            SelectedComponent.IsSelected = false;
             SelectedComponent = null;
         }
     }
-
 
     public void UpdateTempLine(Point position)
     {

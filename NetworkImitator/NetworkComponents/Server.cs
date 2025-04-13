@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Windows.Media.Imaging;
 using NetworkImitator.Extensions;
 using NetworkImitator.UI;
 
@@ -14,14 +13,9 @@ public class Server : Component
     
     public int TimeToProcessMs { get; set; }
 
-    private List<ProcessingProcess> Processing = new();
+    private List<ProcessingProcess> Processing = [];
 
     public override BitmapImage Image => new(Images.ServerImageUri);
-
-    public override Brush GetBrush()
-    {
-        return Processing.Count == 0 ? Brushes.Aquamarine : Brushes.Maroon;
-    }
 
     public override void ReceiveData(Message message)
     {
@@ -43,7 +37,6 @@ public class Server : Component
                 finished.Add(process);
         }
 
-        var rnd = new Random();
         foreach (var process in finished)
         {
             var toIp = process.Message.FromIP;

@@ -2,7 +2,7 @@
 
 namespace NetworkImitator.UI;
 
-public class Strokes
+public static class Strokes
 {
     public static Brush SelectedStroke => Brushes.Red;
 }

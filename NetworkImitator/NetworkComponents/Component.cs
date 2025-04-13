@@ -1,5 +1,4 @@
-﻿using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NetworkImitator.Extensions;
 using NetworkImitator.UI;
@@ -14,14 +13,11 @@ public abstract partial class Component : ObservableObject
     [ObservableProperty] private double _y;
     [ObservableProperty] private bool _isSelected;
 
-    public List<Connection> Connections { get; } = new();
+    public List<Connection> Connections { get; } = [];
 
     public abstract BitmapImage Image { get; }
 
     public MainViewModel MainViewModel { get; }
-
-    public abstract Brush GetBrush();
-
 
     protected Component(MainViewModel mainViewModel, double x, double y)
     {

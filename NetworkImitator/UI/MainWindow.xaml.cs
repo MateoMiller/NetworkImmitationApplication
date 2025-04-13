@@ -33,7 +33,7 @@ public partial class MainWindow : Window
         Closed += (_, _) => _timer.Stop();
     }
 
-    private void TimerTick(object sender, EventArgs e)
+    private void TimerTick(object? sender, EventArgs e)
     {
         //Можно сделать await Task.Run(() => _viewModel.Update(UpdateUITime));
         _viewModel.Update(UpdateUITime);

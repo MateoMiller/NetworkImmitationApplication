@@ -1,4 +1,6 @@
-﻿namespace NetworkImitator.UI;
+﻿using NetworkImitator.UI.Commands;
+
+namespace NetworkImitator.UI;
 
 public class AddConnectionCommand(MainViewModel viewModel) : CommandBase(viewModel)
 {

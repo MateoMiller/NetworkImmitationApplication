@@ -1,4 +1,5 @@
 ﻿using NetworkImitator.NetworkComponents;
+using NetworkImitator.UI.Commands;
 
 namespace NetworkImitator.UI;
 
@@ -6,7 +7,7 @@ public class AddLoadBalancerCommand(MainViewModel viewModel, LoadBalancerAlgorit
 {
     protected override void Execute()
     {
-        var loadBalancer = new LoadBalancer(100, 100, algorithm, viewModel);
+        var loadBalancer = new LoadBalancer(100, 100, algorithm, ViewModel);
         ViewModel.AddVertex(loadBalancer);
     }
 }

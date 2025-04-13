@@ -16,7 +16,7 @@ namespace NetworkImitator.UI
         }
 
         public static readonly DependencyProperty ComponentProperty =
-            DependencyProperty.Register("Component", typeof(Component), typeof(ComponentControl));
+            DependencyProperty.Register(nameof(Component), typeof(Component), typeof(ComponentControl));
 
         public Component Component
         {
