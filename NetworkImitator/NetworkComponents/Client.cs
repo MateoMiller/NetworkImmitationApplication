@@ -44,7 +44,7 @@ public class Client : Component
         }
     }
 
-    public override void ReceiveData(Message currentMessage)
+    public override void ReceiveData(Connection connection, Message currentMessage)
     {
         state = ClientState.ProcessingData;
     }

@@ -17,7 +17,7 @@ public class Server : Component
 
     public override BitmapImage Image => new(Images.ServerImageUri);
 
-    public override void ReceiveData(Message message)
+    public override void ReceiveData(Connection connection, Message message)
     {
         Processing.Add(new(message, TimeSpan.FromMilliseconds(TimeToProcessMs)));
     }

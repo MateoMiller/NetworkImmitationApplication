@@ -33,10 +33,15 @@ public abstract partial class Component : ObservableObject
     {
         if (!Connections.Contains(connection))
             Connections.Add(connection);
+        OnNewConnection(connection);
+    }
+
+    protected virtual void OnNewConnection(Connection connection)
+    {
     }
 
     public abstract void ProcessTick(TimeSpan elapsed);
 
-    public abstract void ReceiveData(Message currentMessage);
+    public abstract void ReceiveData(Connection connection, Message currentMessage);
 
 }

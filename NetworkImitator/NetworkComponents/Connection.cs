@@ -26,7 +26,7 @@ public class Connection
             if (Elapsed > TimeSpan.FromMilliseconds(200))
             {
                 var receiver = FirstComponent.IP == currentMessage.ToIP ? FirstComponent : SecondComponent;
-                receiver.ReceiveData(currentMessage);
+                receiver.ReceiveData(this, currentMessage);
                 currentMessage = null;
             }
         }
