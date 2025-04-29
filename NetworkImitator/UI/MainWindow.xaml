@@ -93,6 +93,17 @@
                             <TextBlock Text="{Binding DisplayName}" FontStyle="Italic"/>
                             <TextBlock Text="Время передачи данных (мс):"/>
                             <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Макс. одновременных передач:"/>
+                            <TextBox Text="{Binding MaxConcurrentMessages, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Text="Состояние соединения:" Margin="0,10,0,0"/>
+                            <TextBlock>
+                                <Run Text="Сообщений в пути: "/>
+                                <Run Text="{Binding MessagesInTransitCount, Mode=OneWay}"/>
+                            </TextBlock>
+                            <TextBlock>
+                                <Run Text="Сообщений в очереди: "/>
+                                <Run Text="{Binding MessagesInQueueCount, Mode=OneWay}"/>
+                            </TextBlock>
                         </StackPanel>
                     </DataTemplate>
                 </ContentControl.Resources>

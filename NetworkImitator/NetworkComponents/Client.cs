@@ -32,13 +32,12 @@ public class Client : Component
                     foreach (var connection in Connections)
                     {
                         var receiver = connection.GetOppositeComponent(IP);
-                        var msg = new Message(IP, receiver!.IP, RandomExtensions.RandomWord());
+                        var msg = new Message(IP, receiver!.IP, RandomExtensions.RandomWord(), IP);
                 
                         connection.TransferData(msg);
                         
                         state = ClientState.WaitingForResponse;
                     }
-
                 }
                 break;
         }

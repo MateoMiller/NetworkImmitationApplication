@@ -11,8 +11,6 @@ namespace NetworkImitator.NetworkComponents
         private int currentServerIndex;
         private readonly List<Server> _servers = [];
         
-        private readonly Dictionary<string, string> _serverToClientMap = new();
-
         public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm, MainViewModel viewModel) : base(viewModel, x, y)
         {
             _algorithm = algorithm;
@@ -25,11 +23,11 @@ namespace NetworkImitator.NetworkComponents
             if (_servers.Count == 0)
             {
                 Console.WriteLine("LoadBalancer: No servers available to handle the request.");
-                connection.TransferData(new Message(IP, message.FromIP, "No servers available to handle the request."));
+                connection.TransferData(new Message(IP, message.FromIP, "No servers available to handle the request.", message.OriginalSenderIp));
                 return;
             }
 
-            if (_serverToClientMap.ContainsKey(message.FromIP))
+            if (message.OriginalSenderIp != message.FromIP)
             {
                 HandleServerToLoadBalancerMessage(message);
             } 
@@ -39,58 +37,34 @@ namespace NetworkImitator.NetworkComponents
             } 
             else
             {
-                Console.WriteLine($"Something went wrong. Message from {message.FromIP} to {message.ToIP} is not expected.");
+                Console.WriteLine($"LoadBalancer: Unexpected message from {message.FromIP} to {message.ToIP}");
             }
         }
 
         private void HandleClientToLoadBalancerMessage(Message message)
         {
-            var server = GetServerForClient(message.FromIP);
-            var connection = Connections.FirstOrDefault(x => x.GetComponent(server.IP) != null);
+            var server = SelectServer();
+            var connection = Connections.FirstOrDefault(x => x.GetComponent(server?.IP) != null);
             
             if (connection != null)
             {
-                var modifiedMessage = message.CreateWithModifiedIPs(IP, server.IP);
-                
-                Console.WriteLine($"LoadBalancer: Forwarding data from client {message.FromIP} to server at {server.IP}");
-                Console.WriteLine($"LoadBalancer: Changed message IPs from {message.FromIP}->{message.ToIP} to {modifiedMessage.FromIP}->{modifiedMessage.ToIP}");
-                
+                var modifiedMessage = message.CreateWithModifiedIPs(IP, server!.IP);
                 connection.TransferData(modifiedMessage);
             }
         }
 
         private void HandleServerToLoadBalancerMessage(Message message)
         {
-            if (_serverToClientMap.TryGetValue(message.FromIP, out var clientIP))
+            var clientConnection = Connections.FirstOrDefault(x => x.GetComponent(message.OriginalSenderIp) != null);
+            if (clientConnection != null)
             {
-                var modifiedMessage = message.CreateWithModifiedIPs(IP, clientIP);
-                SendMessageToClient(modifiedMessage);
-            }
-        }
-
-        private void SendMessageToClient(Message message)
-        {
-            var connection = Connections.FirstOrDefault(x => x.GetComponent(message.ToIP) != null);
-            if (connection != null)
-            {
-                connection.TransferData(message);
+                var responseMessage = new Message(IP, message.OriginalSenderIp, message.Content, message.OriginalSenderIp);
+                clientConnection.TransferData(responseMessage);
             }
             else
             {
-                Console.WriteLine($"LoadBalancer: Failed to find client with IP {message.ToIP}");
+                Console.WriteLine($"LoadBalancer: Failed to find connection to client {message.OriginalSenderIp}");
             }
-        }
-
-        private Server GetServerForClient(string clientIP)
-        {
-            var server = SelectServer();
-            if (server != null)
-            {
-                _serverToClientMap[server.IP] = clientIP;
-                Console.WriteLine($"LoadBalancer: Assigned server {server.IP} for client {clientIP}");
-            }
-            
-            return server;
         }
 
         public override void ProcessTick(TimeSpan elapsed)

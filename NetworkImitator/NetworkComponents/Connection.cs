@@ -1,4 +1,5 @@
-﻿using System.Windows.Media;
+﻿using System.Collections.ObjectModel;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Point = System.Windows.Point;
 
@@ -12,31 +13,58 @@ public partial class Connection : ObservableObject
 
     [ObservableProperty] private int _timeToProcessMs = 200;
     [ObservableProperty] private bool _isSelected;
+    [ObservableProperty] private int _maxConcurrentMessages = 3;
+
+    private readonly ObservableCollection<MessageInTransit> _messagesInTransit = new();
+
+    private readonly Queue<Message> _messagesQueue = new();
+
+    public int MessagesInTransitCount => _messagesInTransit.Count;
+
+    public int MessagesInQueueCount => _messagesQueue.Count;
     
     public string DisplayName => $"Соединение {FirstComponent?.DeviceName} → {SecondComponent?.DeviceName}";
     
     public Point? TemporaryPosition { get; set; }
-    private Message? currentMessage;
-    private TimeSpan Elapsed = TimeSpan.Zero;
 
     public Brush GetBrush()
     {
         if (IsSelected)
-            return currentMessage == null ? Brushes.Blue : Brushes.Red;
-        return currentMessage == null ? Brushes.Black : Brushes.Yellow;
+            return Brushes.Blue;
+
+        if (_messagesInTransit.Count == 0)
+            return Brushes.Black;
+        if (_messagesInTransit.Count < MaxConcurrentMessages / 2)
+            return Brushes.Green;
+        if (_messagesInTransit.Count < MaxConcurrentMessages)
+            return Brushes.Yellow;
+        return Brushes.Red;
     }
 
     public void ProcessTick(TimeSpan elapsed)
     {
-        if (currentMessage != null)
+        var completedMessages = new List<MessageInTransit>();
+        
+        foreach (var messageInTransit in _messagesInTransit.ToArray())
         {
-            Elapsed += elapsed;
-            if (Elapsed > TimeSpan.FromMilliseconds(TimeToProcessMs))
+            messageInTransit.ElapsedTime += elapsed;
+            if (messageInTransit.ElapsedTime.TotalMilliseconds > TimeToProcessMs)
             {
-                var receiver = FirstComponent.IP == currentMessage.ToIP ? FirstComponent : SecondComponent;
-                receiver.ReceiveData(this, currentMessage);
-                currentMessage = null;
+                var receiver = FirstComponent.IP == messageInTransit.Message.ToIP ? FirstComponent : SecondComponent;
+                receiver.ReceiveData(this, messageInTransit.Message);
+                completedMessages.Add(messageInTransit);
             }
+        }
+        
+        foreach (var message in completedMessages)
+        {
+            _messagesInTransit.Remove(message);
+        }
+        
+        while (_messagesInTransit.Count < MaxConcurrentMessages && _messagesQueue.Count > 0)
+        {
+            var message = _messagesQueue.Dequeue();
+            _messagesInTransit.Add(new MessageInTransit(message));
         }
     }
 
@@ -56,7 +84,13 @@ public partial class Connection : ObservableObject
 
     public void TransferData(Message message)
     {
-        currentMessage = message;
-        Elapsed = TimeSpan.Zero;
+        if (_messagesInTransit.Count < MaxConcurrentMessages)
+        {
+            _messagesInTransit.Add(new MessageInTransit(message));
+        }
+        else
+        {
+            _messagesQueue.Enqueue(message);
+        }
     }
 }
