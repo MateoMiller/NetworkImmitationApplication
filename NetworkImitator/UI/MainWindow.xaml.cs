@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using NetworkImitator.NetworkComponents;
 using Component = NetworkImitator.NetworkComponents.Component;
 
 namespace NetworkImitator.UI;
@@ -75,8 +76,18 @@ public partial class MainWindow : Window
         if (e.Key == Key.Escape)
         {
             _viewModel.UnselectVertex(_viewModel.SelectedComponent);
+            _viewModel.UnselectConnection(_viewModel.SelectedConnection);
             _viewModel.TempConnection = null;
             RedrawEverything();
+        }
+    }
+    
+    private void OnConnectionClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Line { DataContext: Connection connection })
+        {
+            _viewModel.SelectConnection(connection);
+            e.Handled = true;
         }
     }
 
@@ -109,9 +120,10 @@ public partial class MainWindow : Window
                 X2 = edge.SecondComponent.X + width / 2,
                 Y2 = edge.SecondComponent.Y + width / 2,
                 Stroke = edge.GetBrush(),
-                StrokeThickness = 2,
+                StrokeThickness = edge.IsSelected ? 4 : 2,
                 DataContext = edge
             };
+            line.MouseLeftButtonDown += OnConnectionClick;
             ComponentsCanvas.Children.Add(line);
         }
 

@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject
     public Connection? TempConnection { get; set; }
     
     [ObservableProperty] private Component? _selectedComponent;
+    [ObservableProperty] private Connection? _selectedConnection;
 
     public void Update(TimeSpan totalElapsed, int updatesPerOneUiRedraw)
     {
@@ -72,6 +73,7 @@ public partial class MainViewModel : ObservableObject
     public void SelectVertex(Component component)
     {
         UnselectVertex(SelectedComponent);
+        UnselectConnection(SelectedConnection);
         SelectedComponent = component;
         SelectedComponent.IsSelected = true;
     }
@@ -82,6 +84,23 @@ public partial class MainViewModel : ObservableObject
         {
             SelectedComponent.IsSelected = false;
             SelectedComponent = null;
+        }
+    }
+
+    public void SelectConnection(Connection connection)
+    {
+        UnselectVertex(SelectedComponent);
+        UnselectConnection(SelectedConnection);
+        SelectedConnection = connection;
+        SelectedConnection.IsSelected = true;
+    }
+
+    public void UnselectConnection(Connection? connection)
+    {
+        if (SelectedConnection == connection && SelectedConnection != null)
+        {
+            SelectedConnection.IsSelected = false;
+            SelectedConnection = null;
         }
     }
 

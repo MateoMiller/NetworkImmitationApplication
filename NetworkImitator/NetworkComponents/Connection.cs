@@ -1,20 +1,28 @@
 ﻿using System.Windows.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Point = System.Windows.Point;
 
 namespace NetworkImitator.NetworkComponents;
 
-public class Connection
+public partial class Connection : ObservableObject
 {
     public Component FirstComponent { get; set; }
 
     public Component SecondComponent { get; set; }
 
+    [ObservableProperty] private int _timeToProcessMs = 200;
+    [ObservableProperty] private bool _isSelected;
+    
+    public string DisplayName => $"Соединение {FirstComponent?.DeviceName} → {SecondComponent?.DeviceName}";
+    
     public Point? TemporaryPosition { get; set; }
     private Message? currentMessage;
     private TimeSpan Elapsed = TimeSpan.Zero;
 
     public Brush GetBrush()
     {
+        if (IsSelected)
+            return currentMessage == null ? Brushes.Blue : Brushes.Red;
         return currentMessage == null ? Brushes.Black : Brushes.Yellow;
     }
 
@@ -23,7 +31,7 @@ public class Connection
         if (currentMessage != null)
         {
             Elapsed += elapsed;
-            if (Elapsed > TimeSpan.FromMilliseconds(200))
+            if (Elapsed > TimeSpan.FromMilliseconds(TimeToProcessMs))
             {
                 var receiver = FirstComponent.IP == currentMessage.ToIP ? FirstComponent : SecondComponent;
                 receiver.ReceiveData(this, currentMessage);
