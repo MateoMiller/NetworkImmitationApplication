@@ -3,7 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:networkComponents="clr-namespace:NetworkImitator.NetworkComponents"
         xmlns:ui="clr-namespace:NetworkImitator.UI"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         Title="Graph App" Height="600" Width="1200">
+    <Window.Resources>
+        <ObjectDataProvider x:Key="AlgorithmValues" MethodName="GetValues" 
+                           ObjectType="{x:Type system:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="networkComponents:LoadBalancerAlgorithm"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -16,7 +25,6 @@
             <Button Content="Добавить сервер" Command="{Binding AddServerCommand}"/>
             <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}"/>
             <Button Content="Добавить ребро" Command="{Binding AddConnectionCommand}"/>
-
         </StackPanel>
     
         <Canvas Name="ComponentsCanvas" Grid.Column="0" Background="LightGray" MouseMove="OnCanvasMouseMove">
@@ -44,7 +52,7 @@
             <TextBlock Text="Настройки компонента" FontWeight="Bold" FontSize="16"/>
             <ContentControl Content="{Binding SelectedComponent}">
                 <ContentControl.Resources>
-                    <DataTemplate x:Key="CommonIPAddressTemplate">
+                    <DataTemplate x:Key="CommonIpAddressTemplate">
                         <StackPanel>
                             <TextBlock Text="IP адрес"/>
                             <TextBox Text="{Binding IP, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
@@ -56,14 +64,22 @@
                         <StackPanel>
                             <TextBlock Text="Период отправки пакетов:"/>
                             <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" />
-                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIPAddressTemplate}" />
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Server}">
                         <StackPanel>
                             <TextBlock Text="Время обработки:"/>
                             <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" />
-                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIPAddressTemplate}" />
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
+                        </StackPanel>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type networkComponents:LoadBalancer}">
+                        <StackPanel>
+                            <TextBlock Text="Алгоритм балансировки:"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource AlgorithmValues}}"
+                                      SelectedItem="{Binding Algorithm}"/>
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
                         </StackPanel>
                     </DataTemplate>
                 </ContentControl.Resources>

@@ -1,23 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System.Windows.Media.Imaging;
 using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents
 {
-    public class LoadBalancer : Component
+    public partial class LoadBalancer : Component
     {
+        [ObservableProperty] private LoadBalancerAlgorithm _algorithm;
+
         private int currentServerIndex;
         private readonly List<Server> _servers = [];
-        private readonly LoadBalancerAlgorithm algorithm;
         
-        // Словарь для отслеживания соответствий между IP серверов и оригинальными IP клиентов
-        private readonly Dictionary<string, string> _serverToClientMap = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _serverToClientMap = new();
 
         public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm, MainViewModel viewModel) : base(viewModel, x, y)
         {
-            this.algorithm = algorithm;
+            _algorithm = algorithm;
         }
 
         public override BitmapImage Image => new(Images.LoadBalancerUri);
@@ -61,7 +59,6 @@ namespace NetworkImitator.NetworkComponents
             }
         }
 
-        // Обработка сообщения от сервера к балансировщику
         private void HandleServerToLoadBalancerMessage(Message message)
         {
             if (_serverToClientMap.TryGetValue(message.FromIP, out var clientIP))
@@ -101,11 +98,11 @@ namespace NetworkImitator.NetworkComponents
 
         private Server? SelectServer()
         {
-            return algorithm switch
+            return Algorithm switch
             {
                 LoadBalancerAlgorithm.RoundRobin => SelectRoundRobin(),
                 LoadBalancerAlgorithm.LeastConnections => SelectLeastConnections(),
-                _ => throw new InvalidOperationException($"Unknown algorithm: {algorithm}")
+                _ => throw new InvalidOperationException($"Unknown algorithm: {_algorithm}")
             };
         }
 
