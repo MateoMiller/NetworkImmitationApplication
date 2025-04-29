@@ -17,16 +17,21 @@ public partial class MainViewModel : ObservableObject
     
     [ObservableProperty] private Component? _selectedComponent;
 
-    public void Update(TimeSpan elapsed)
+    public void Update(TimeSpan totalElapsed, int updatesPerOneUiRedraw)
     {
-        foreach (var component in Components)
-        {
-            component.ProcessTick(elapsed);
-        }
+        var stepDuration = TimeSpan.FromMilliseconds(totalElapsed.TotalMilliseconds / updatesPerOneUiRedraw);
 
-        foreach (var connection in Connections)
+        for (var i = 0; i < updatesPerOneUiRedraw; i++)
         {
-            connection.ProcessTick(elapsed);
+            foreach (var component in Components)
+            {
+                component.ProcessTick(stepDuration);
+            }
+    
+            foreach (var connection in Connections)
+            {
+                connection.ProcessTick(stepDuration);
+            }
         }
     }
     
