@@ -12,17 +12,12 @@ public partial class Connection : ObservableObject
 
     [ObservableProperty] private int _timeToProcessMs = 200;
     [ObservableProperty] private bool _isSelected;
-    [ObservableProperty] private int _maxConcurrentMessages = 3;
 
     private readonly ObservableCollection<MessageInTransit> _messagesInTransit = new();
 
-    private readonly Queue<Message> _messagesQueue = new();
-
     public int MessagesInTransitCount => _messagesInTransit.Count;
-
-    public int MessagesInQueueCount => _messagesQueue.Count;
     
-    public string DisplayName => $"Соединение {FirstComponent?.DeviceName} → {SecondComponent?.DeviceName}";
+    public string DisplayName => $"Соединение {FirstComponent.DeviceName} → {SecondComponent.DeviceName}";
     
     public Point? TemporaryPosition { get; set; }
 
@@ -31,13 +26,7 @@ public partial class Connection : ObservableObject
         if (IsSelected)
             return Brushes.Blue;
 
-        if (_messagesInTransit.Count == 0)
-            return Brushes.Black;
-        if (_messagesInTransit.Count < MaxConcurrentMessages / 2)
-            return Brushes.Green;
-        if (_messagesInTransit.Count < MaxConcurrentMessages)
-            return Brushes.Yellow;
-        return Brushes.Red;
+        return new SolidColorBrush(GetColor(_messagesInTransit.Count, 4));
     }
 
     public void ProcessTick(TimeSpan elapsed)
@@ -60,11 +49,7 @@ public partial class Connection : ObservableObject
             _messagesInTransit.Remove(message);
         }
         
-        while (_messagesInTransit.Count < MaxConcurrentMessages && _messagesQueue.Count > 0)
-        {
-            var message = _messagesQueue.Dequeue();
-            _messagesInTransit.Add(new MessageInTransit(message));
-        }
+        OnPropertyChanged(nameof(MessagesInTransitCount));
     }
 
     public Component? GetComponent(string ip)
@@ -83,13 +68,20 @@ public partial class Connection : ObservableObject
 
     public void TransferData(Message message)
     {
-        if (_messagesInTransit.Count < MaxConcurrentMessages)
+        _messagesInTransit.Add(new MessageInTransit(message));
+    }
+    
+    private static Color GetColor(int n, int max)
+    {
+        var ratio = Math.Max(0, Math.Min(1, (double)n / max));
+
+        if (ratio <= 0.5)
         {
-            _messagesInTransit.Add(new MessageInTransit(message));
+            var value = (byte)(ratio / 0.5 * 255);
+            return Color.FromRgb(value, value, 0);
         }
-        else
-        {
-            _messagesQueue.Enqueue(message);
-        }
+
+        var green = (byte)((1 - (ratio - 0.5) / 0.5) * 255);
+        return Color.FromRgb(255, green, 0);
     }
 }

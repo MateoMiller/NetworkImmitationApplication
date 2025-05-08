@@ -91,7 +91,7 @@ namespace NetworkImitator.NetworkComponents
 
         private Server? SelectLeastConnections()
         {
-            return _servers.OrderBy(s => s.GetProcessingLoad()).FirstOrDefault();
+            return _servers.OrderBy(s => s.GetTotalLoad).FirstOrDefault();
         }
 
         protected override void OnNewConnection(Connection connection)
