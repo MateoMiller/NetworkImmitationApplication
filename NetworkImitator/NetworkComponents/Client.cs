@@ -6,8 +6,8 @@ namespace NetworkImitator.NetworkComponents;
 
 public class Client : Component
 {
-    private ClientState state = ClientState.ProcessingData;
-    private TimeSpan timeSinceLastSendPacket = TimeSpan.Zero;
+    private ClientState _state = ClientState.ProcessingData;
+    private TimeSpan _timeSinceLastSendPacket = TimeSpan.Zero;
     public int SendingPacketPeriod { get; set; }
 
     private ClientMode _clientMode = ClientMode.Http;
@@ -19,9 +19,9 @@ public class Client : Component
             if (_clientMode != value)
             {
                 _clientMode = value;
-                if (_clientMode == ClientMode.Ping && state == ClientState.WaitingForResponse)
+                if (_clientMode == ClientMode.Ping && _state == ClientState.WaitingForResponse)
                 {
-                    state = ClientState.ProcessingData;
+                    _state = ClientState.ProcessingData;
                 }
                 OnPropertyChanged();
             }
@@ -39,13 +39,13 @@ public class Client : Component
 
     public override void ProcessTick(TimeSpan elapsed)
     {
-        switch (state)
+        switch (_state)
         {
             case ClientState.ProcessingData:
-                timeSinceLastSendPacket += elapsed;
-                if (timeSinceLastSendPacket.TotalMilliseconds >= SendingPacketPeriod)
+                _timeSinceLastSendPacket += elapsed;
+                if (_timeSinceLastSendPacket.TotalMilliseconds >= SendingPacketPeriod)
                 {
-                    timeSinceLastSendPacket = TimeSpan.Zero;
+                    _timeSinceLastSendPacket = TimeSpan.Zero;
 
                     foreach (var connection in Connections)
                     {
@@ -56,7 +56,7 @@ public class Client : Component
                         
                         if (ClientMode == ClientMode.Http)
                         {
-                            state = ClientState.WaitingForResponse;
+                            _state = ClientState.WaitingForResponse;
                         }
                     }
                 }
@@ -66,6 +66,6 @@ public class Client : Component
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
-        state = ClientState.ProcessingData;
+        _state = ClientState.ProcessingData;
     }
 }

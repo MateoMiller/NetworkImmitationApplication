@@ -15,7 +15,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _timer;
-    private readonly TimeSpan UpdateUITime = TimeSpan.FromMilliseconds(16);
+    private readonly TimeSpan _updateUiTime = TimeSpan.FromMilliseconds(16);
 
     private const int UpdatesPerOneUiRedraw = 100;
 
@@ -27,7 +27,7 @@ public partial class MainWindow : Window
 
         _timer = new DispatcherTimer
         {
-            Interval = UpdateUITime
+            Interval = _updateUiTime
         };
         _timer.Tick += TimerTick;
         _timer.Start();
@@ -39,7 +39,7 @@ public partial class MainWindow : Window
     private void TimerTick(object? sender, EventArgs e)
     {
         //Можно сделать await Task.Run(() => _viewModel.Update(UpdateUITime));
-        _viewModel.Update(UpdateUITime, UpdatesPerOneUiRedraw);
+        _viewModel.Update(_updateUiTime, UpdatesPerOneUiRedraw);
         RedrawEverything();
     }
 
@@ -109,16 +109,16 @@ public partial class MainWindow : Window
             ComponentsCanvas.Children.Remove(remove);
         }
 
-        var width = 50;
+        const int width = 25;
 
         foreach (var edge in _viewModel.Connections)
         {
             var line = new Line
             {
-                X1 = edge.FirstComponent.X + width / 2,
-                Y1 = edge.FirstComponent.Y + width / 2,
-                X2 = edge.SecondComponent.X + width / 2,
-                Y2 = edge.SecondComponent.Y + width / 2,
+                X1 = edge.FirstComponent.X + width,
+                Y1 = edge.FirstComponent.Y + width,
+                X2 = edge.SecondComponent.X + width,
+                Y2 = edge.SecondComponent.Y + width,
                 Stroke = edge.GetBrush(),
                 StrokeThickness = edge.IsSelected ? 4 : 2,
                 DataContext = edge

@@ -8,7 +8,6 @@ namespace NetworkImitator.NetworkComponents;
 public partial class Connection : ObservableObject
 {
     public Component FirstComponent { get; set; }
-
     public Component SecondComponent { get; set; }
 
     [ObservableProperty] private int _timeToProcessMs = 200;

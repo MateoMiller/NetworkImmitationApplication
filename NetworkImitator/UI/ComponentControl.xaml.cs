@@ -7,8 +7,8 @@ namespace NetworkImitator.UI
 {
     public partial class ComponentControl : UserControl
     {
-        private bool isDragging;
-        public MainViewModel _mainViewModel => Component.MainViewModel;
+        private bool _isDragging;
+        private MainViewModel _mainViewModel => Component.MainViewModel;
 
         public ComponentControl()
         {
@@ -27,19 +27,19 @@ namespace NetworkImitator.UI
         private void OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _mainViewModel.SelectVertex(Component);
-            isDragging = true;
+            _isDragging = true;
             CaptureMouse();
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (isDragging && _mainViewModel.SelectedComponent != Component)
+            if (_isDragging && _mainViewModel.SelectedComponent != Component)
             {
                 //Извне перестали считвать компонент как выделенный 
-                isDragging = false;
+                _isDragging = false;
             }
 
-            if (isDragging)
+            if (_isDragging)
             {
                 //TODO Костыль, работающий только при Grid=0
                 var newPosition = e.GetPosition(null);
@@ -50,7 +50,7 @@ namespace NetworkImitator.UI
 
         private void OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            isDragging = false;
+            _isDragging = false;
             ReleaseMouseCapture();
         }
     }

@@ -19,7 +19,7 @@ public class Server : Component
 
     public override void ReceiveData(Connection connection, Message message)
     {
-        Processing.Add(new(message, TimeSpan.FromMilliseconds(TimeToProcessMs)));
+        Processing.Add(new ProcessingProcess(message, TimeSpan.FromMilliseconds(TimeToProcessMs)));
     }
     
     public int GetProcessingLoad()

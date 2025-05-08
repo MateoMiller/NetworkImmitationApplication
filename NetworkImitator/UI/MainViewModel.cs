@@ -1,10 +1,9 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NetworkImitator.NetworkComponents;
+using NetworkImitator.UI.Commands;
 using Component = NetworkImitator.NetworkComponents.Component;
 
 namespace NetworkImitator.UI;

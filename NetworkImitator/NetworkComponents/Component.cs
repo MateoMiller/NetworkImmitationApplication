@@ -13,7 +13,7 @@ public abstract partial class Component : ObservableObject
     [ObservableProperty] private double _y;
     [ObservableProperty] private bool _isSelected;
 
-    public List<Connection> Connections { get; } = [];
+    protected List<Connection> Connections { get; } = [];
 
     public abstract BitmapImage Image { get; }
 

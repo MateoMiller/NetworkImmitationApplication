@@ -1,7 +1,6 @@
 ﻿using NetworkImitator.NetworkComponents;
-using NetworkImitator.UI.Commands;
 
-namespace NetworkImitator.UI;
+namespace NetworkImitator.UI.Commands;
 
 public class AddClientCommand(MainViewModel viewModel) : CommandBase(viewModel)
 {

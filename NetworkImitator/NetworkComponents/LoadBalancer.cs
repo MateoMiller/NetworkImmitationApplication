@@ -8,7 +8,7 @@ namespace NetworkImitator.NetworkComponents
     {
         [ObservableProperty] private LoadBalancerAlgorithm _algorithm;
 
-        private int currentServerIndex;
+        private int _currentServerIndex;
         private readonly List<Server> _servers = [];
         
         public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm, MainViewModel viewModel) : base(viewModel, x, y)
@@ -76,7 +76,7 @@ namespace NetworkImitator.NetworkComponents
             {
                 LoadBalancerAlgorithm.RoundRobin => SelectRoundRobin(),
                 LoadBalancerAlgorithm.LeastConnections => SelectLeastConnections(),
-                _ => throw new InvalidOperationException($"Unknown algorithm: {_algorithm}")
+                _ => throw new InvalidOperationException($"Unknown algorithm: {Algorithm}")
             };
         }
 
@@ -84,8 +84,8 @@ namespace NetworkImitator.NetworkComponents
         {
             if (_servers.Count == 0) 
                 return null;
-            var server = _servers[currentServerIndex];
-            currentServerIndex = (currentServerIndex + 1) % _servers.Count;
+            var server = _servers[_currentServerIndex];
+            _currentServerIndex = (_currentServerIndex + 1) % _servers.Count;
             return server;
         }
 
