@@ -10,6 +10,24 @@ public class Client : Component
     private TimeSpan timeSinceLastSendPacket = TimeSpan.Zero;
     public int SendingPacketPeriod { get; set; }
 
+    private ClientMode _clientMode = ClientMode.Http;
+    public ClientMode ClientMode
+    {
+        get => _clientMode;
+        set
+        {
+            if (_clientMode != value)
+            {
+                _clientMode = value;
+                if (_clientMode == ClientMode.Ping && state == ClientState.WaitingForResponse)
+                {
+                    state = ClientState.ProcessingData;
+                }
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public Client(double x, double y, int sendingPacketPeriodInMs, MainViewModel viewModel) : base(viewModel, x, y)
     {
         X = x;
@@ -36,7 +54,10 @@ public class Client : Component
                 
                         connection.TransferData(msg);
                         
-                        state = ClientState.WaitingForResponse;
+                        if (ClientMode == ClientMode.Http)
+                        {
+                            state = ClientState.WaitingForResponse;
+                        }
                     }
                 }
                 break;

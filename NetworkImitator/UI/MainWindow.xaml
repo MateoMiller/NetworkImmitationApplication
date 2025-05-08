@@ -12,6 +12,12 @@
                 <x:Type TypeName="networkComponents:LoadBalancerAlgorithm"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+        <ObjectDataProvider x:Key="ClientModeValues" MethodName="GetValues" 
+                           ObjectType="{x:Type system:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="networkComponents:ClientMode"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -62,6 +68,21 @@
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Client}">
                         <StackPanel>
+                            <TextBlock Text="Режим работы:"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource ClientModeValues}}"
+                                      SelectedItem="{Binding ClientMode}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0}">
+                                                    <Binding />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                             <TextBlock Text="Период отправки пакетов:"/>
                             <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" />
                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
