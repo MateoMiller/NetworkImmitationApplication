@@ -11,6 +11,8 @@ namespace NetworkImitator.NetworkComponents
         private int _currentServerIndex;
         private readonly List<Server> _servers = [];
         
+        private readonly Dictionary<string, string> _clientServerMapping = new();
+        
         public LoadBalancer(double x, double y, LoadBalancerAlgorithm algorithm, MainViewModel viewModel) : base(viewModel, x, y)
         {
             _algorithm = algorithm;
@@ -43,19 +45,50 @@ namespace NetworkImitator.NetworkComponents
 
         private void HandleClientToLoadBalancerMessage(Message message)
         {
-            var server = SelectServer();
-            var connection = Connections.FirstOrDefault(x => x.GetComponent(server?.IP) != null);
-            
-            if (connection != null)
+            string? serverIp = null;
+            if (_clientServerMapping.TryGetValue(message.FromIP, out var mappedServerIp))
             {
-                var modifiedMessage = message.CreateWithModifiedIPs(IP, server!.IP);
-                connection.TransferData(modifiedMessage);
+                if (_servers.Any(s => s.IP == mappedServerIp))
+                {
+                    serverIp = mappedServerIp;
+                }
+                else
+                {
+                    _clientServerMapping.Remove(message.FromIP);
+                }
+            }
+            
+            if (serverIp == null)
+            {
+                var server = SelectServer();
+                if (server != null)
+                {
+                    serverIp = server.IP;
+                    // Сохраняем новое сопоставление
+                    _clientServerMapping[message.FromIP] = serverIp;
+                }
+            }
+            
+            if (serverIp != null)
+            {
+                var connection = Connections.FirstOrDefault(x => x.IsActive && x.GetComponent(serverIp) != null);
+                
+                if (connection != null)
+                {
+                    var modifiedMessage = message.CreateWithModifiedIPs(IP, serverIp);
+                    connection.TransferData(modifiedMessage);
+                }
+                else
+                {
+                    _clientServerMapping.Remove(message.FromIP);
+                    Console.WriteLine($"LoadBalancer: соединение с сервером {serverIp} неактивно, маппинг удален");
+                }
             }
         }
 
         private void HandleServerToLoadBalancerMessage(Message message)
         {
-            var clientConnection = Connections.FirstOrDefault(x => x.GetComponent(message.OriginalSenderIp) != null);
+            var clientConnection = Connections.FirstOrDefault(x => x.IsActive && x.GetComponent(message.OriginalSenderIp) != null);
             if (clientConnection != null)
             {
                 var responseMessage = new Message(IP, message.OriginalSenderIp, message.Content, message.OriginalSenderIp);
@@ -63,7 +96,14 @@ namespace NetworkImitator.NetworkComponents
             }
             else
             {
-                Console.WriteLine($"LoadBalancer: Failed to find connection to client {message.OriginalSenderIp}");
+                Console.WriteLine($"LoadBalancer: Failed to find active connection to client {message.OriginalSenderIp}");
+                
+                // Если соединение с клиентом неактивно, удаляем маппинг
+                if (_clientServerMapping.ContainsKey(message.OriginalSenderIp))
+                {
+                    _clientServerMapping.Remove(message.OriginalSenderIp);
+                    Console.WriteLine($"LoadBalancer: соединение с клиентом {message.OriginalSenderIp} неактивно, маппинг удален");
+                }
             }
         }
 
@@ -104,6 +144,51 @@ namespace NetworkImitator.NetworkComponents
             else if (connection.SecondComponent is Server server2)
             {
                 RegisterServer(server2);
+            }
+        }
+        
+        public override void OnConnectionDisconnected(Connection connection)
+        {
+            // Проверяем, был ли это сервер
+            if (connection.FirstComponent is Server server)
+            {
+                HandleServerDisconnection(server);
+            }
+            else if (connection.SecondComponent is Server server2)
+            {
+                HandleServerDisconnection(server2);
+            }
+            
+            // Проверяем, был ли это клиент
+            var clientIp = connection.FirstComponent.IP != IP ? connection.FirstComponent.IP : 
+                          connection.SecondComponent.IP != IP ? connection.SecondComponent.IP : null;
+            
+            if (clientIp != null && _clientServerMapping.ContainsKey(clientIp))
+            {
+                _clientServerMapping.Remove(clientIp);
+                Console.WriteLine($"LoadBalancer: соединение с клиентом {clientIp} разорвано, маппинг удален");
+            }
+        }
+        
+        private void HandleServerDisconnection(Server server)
+        {
+            // Удаляем сервер из списка доступных
+            if (_servers.Contains(server))
+            {
+                _servers.Remove(server);
+                Console.WriteLine($"LoadBalancer: сервер {server.IP} удален из списка доступных. Осталось серверов: {_servers.Count}");
+                
+                // Удаляем маппинги к этому серверу
+                var clientsToRemove = _clientServerMapping
+                    .Where(kvp => kvp.Value == server.IP)
+                    .Select(kvp => kvp.Key)
+                    .ToList();
+                
+                foreach (var clientIp in clientsToRemove)
+                {
+                    _clientServerMapping.Remove(clientIp);
+                    Console.WriteLine($"LoadBalancer: удален маппинг клиента {clientIp} к отключенному серверу {server.IP}");
+                }
             }
         }
         

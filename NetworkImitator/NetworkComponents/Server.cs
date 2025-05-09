@@ -25,7 +25,7 @@ public partial class Server : Component
     {
         if (_processing.Count < MaxConcurrentPackets)
         {
-            _processing.Add(new ProcessingProcess(message, TimeSpan.FromMilliseconds(TimeToProcessMs)));
+            _processing.Add(new ProcessingProcess(message, TimeSpan.FromMilliseconds(TimeToProcessMs), connection));
         }
         else
         {
@@ -56,9 +56,13 @@ public partial class Server : Component
         foreach (var process in finished)
         {
             var toIp = process.Message.FromIP;
-            var connection = Connections.First(x => x.GetComponent(toIp) != null);
-            var content = RandomExtensions.RandomWord();
-            connection.TransferData(new Message(IP, toIp, content, process.Message.OriginalSenderIp));
+            var connection = GetActiveConnectionTo(toIp);
+            
+            if (connection != null)
+            {
+                var content = RandomExtensions.RandomWord();
+                connection.TransferData(new Message(IP, toIp, content, process.Message.OriginalSenderIp));
+            }
 
             _processing.Remove(process);
         }
@@ -66,18 +70,41 @@ public partial class Server : Component
         while (_processing.Count < MaxConcurrentPackets && _messagesQueue.Count > 0)
         {
             var nextMessage = _messagesQueue.Dequeue();
-            _processing.Add(new ProcessingProcess(nextMessage, TimeSpan.FromMilliseconds(TimeToProcessMs)));
+            _processing.Add(new ProcessingProcess(nextMessage, TimeSpan.FromMilliseconds(TimeToProcessMs), null));
         }
 
         OnPropertyChanged(nameof(GetProcessingLoad));
         OnPropertyChanged(nameof(GetQueuedMessagesCount));
         OnPropertyChanged(nameof(GetTotalLoad));
     }
-
-    private class ProcessingProcess(Message message, TimeSpan timeToProcess)
+    
+    public override void OnConnectionDisconnected(Connection connection)
     {
-        public Message Message { get; set; } = message;
-        public TimeSpan TimeToProcess { get; } = timeToProcess;
+        var processesToRemove = _processing
+            .Where(p => p.SourceConnection == connection)
+            .ToList();
+        
+        foreach (var process in processesToRemove)
+        {
+            _processing.Remove(process);
+        }
+        
+        OnPropertyChanged(nameof(GetProcessingLoad));
+        OnPropertyChanged(nameof(GetTotalLoad));
+    }
+
+    private class ProcessingProcess
+    {
+        public Message Message { get; set; }
+        public TimeSpan TimeToProcess { get; }
         public TimeSpan Elapsed { get; set; } = TimeSpan.Zero;
+        public Connection? SourceConnection { get; }
+        
+        public ProcessingProcess(Message message, TimeSpan timeToProcess, Connection? sourceConnection)
+        {
+            Message = message;
+            TimeToProcess = timeToProcess;
+            SourceConnection = sourceConnection;
+        }
     }
 }

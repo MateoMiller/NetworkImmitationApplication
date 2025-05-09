@@ -130,7 +130,8 @@
                             <TextBlock>
                                 <Run Text="Сообщений в пути: "/>
                                 <Run Text="{Binding MessagesInTransitCount, Mode=OneWay}"/>
-                            </TextBlock>
+                            </TextBlock>            
+                            <CheckBox Content="Активно" IsChecked="{Binding IsActive, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                     </DataTemplate>
                 </ContentControl.Resources>

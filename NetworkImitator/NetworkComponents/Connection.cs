@@ -13,11 +13,35 @@ public partial class Connection : ObservableObject
     [ObservableProperty] private int _timeToProcessMs = 200;
     [ObservableProperty] private bool _isSelected;
 
+    private bool _isActive = true;
+    public bool IsActive
+    {
+        get => _isActive;
+        set
+        {
+            if (_isActive == value)
+                return;
+                
+            switch (value)
+            {
+                case false:
+                    Disconnect();
+                    break;
+                case true:
+                    Reconnect();
+                    break;
+            }
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(MessagesInTransitCount));
+            OnPropertyChanged(nameof(DisplayName));
+        }
+    }
+
     private readonly ObservableCollection<MessageInTransit> _messagesInTransit = new();
 
     public int MessagesInTransitCount => _messagesInTransit.Count;
     
-    public string DisplayName => $"Соединение {FirstComponent.DeviceName} → {SecondComponent.DeviceName}";
+    public string DisplayName => $"Соединение {FirstComponent.DeviceName} → {SecondComponent.DeviceName} ({(IsActive ? "Активно" : "Отключено")})";
     
     public Point? TemporaryPosition { get; set; }
 
@@ -25,12 +49,16 @@ public partial class Connection : ObservableObject
     {
         if (IsSelected)
             return Brushes.Blue;
-
+        if (!IsActive)
+            return Brushes.Gray;
         return new SolidColorBrush(GetColor(_messagesInTransit.Count, 4));
     }
 
     public void ProcessTick(TimeSpan elapsed)
     {
+        if (!IsActive)
+            return;
+
         var completedMessages = new List<MessageInTransit>();
         
         foreach (var messageInTransit in _messagesInTransit.ToArray())
@@ -48,7 +76,7 @@ public partial class Connection : ObservableObject
         {
             _messagesInTransit.Remove(message);
         }
-        
+
         OnPropertyChanged(nameof(MessagesInTransitCount));
     }
 
@@ -68,7 +96,25 @@ public partial class Connection : ObservableObject
 
     public void TransferData(Message message)
     {
+        if (!IsActive)
+            return;
+
         _messagesInTransit.Add(new MessageInTransit(message));
+    }
+
+    private void Disconnect()
+    {
+        _isActive = false;
+
+        _messagesInTransit.Clear();
+
+        FirstComponent.OnConnectionDisconnected(this);
+        SecondComponent.OnConnectionDisconnected(this);
+    }
+
+    private void Reconnect()
+    {
+        _isActive = true;
     }
     
     private static Color GetColor(int n, int max)

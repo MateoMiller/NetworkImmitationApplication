@@ -35,6 +35,16 @@ public abstract partial class Component : ObservableObject
             Connections.Add(connection);
         OnNewConnection(connection);
     }
+    
+    public virtual void OnConnectionDisconnected(Connection connection)
+    {
+    }
+    
+    protected Connection? GetActiveConnectionTo(string targetIp)
+    {
+        return Connections.FirstOrDefault(c => c.IsActive && 
+            (c.FirstComponent.IP == targetIp || c.SecondComponent.IP == targetIp));
+    }
 
     protected virtual void OnNewConnection(Connection connection)
     {

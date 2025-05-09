@@ -8,6 +8,9 @@ public class Client : Component
 {
     private ClientState _state = ClientState.ProcessingData;
     private TimeSpan _timeSinceLastSendPacket = TimeSpan.Zero;
+    private TimeSpan _timeSinceDisconnection = TimeSpan.Zero;
+    private const int ReconnectAttemptMs = 3000;
+
     public int SendingPacketPeriod { get; set; }
 
     private ClientMode _clientMode = ClientMode.Http;
@@ -47,7 +50,7 @@ public class Client : Component
                 {
                     _timeSinceLastSendPacket = TimeSpan.Zero;
 
-                    foreach (var connection in Connections)
+                    foreach (var connection in Connections.Where(c => c.IsActive))
                     {
                         var receiver = connection.GetOppositeComponent(IP);
                         var msg = new Message(IP, receiver!.IP, RandomExtensions.RandomWord(), IP);
@@ -61,11 +64,33 @@ public class Client : Component
                     }
                 }
                 break;
+                
+            case ClientState.WaitingForResponse:
+                var hasActiveConnections = Connections.Any(c => c.IsActive);
+                if (!hasActiveConnections)
+                {
+                    _timeSinceDisconnection += elapsed;
+                    
+                    if (_timeSinceDisconnection.TotalMilliseconds >= ReconnectAttemptMs)
+                    {
+                        _timeSinceDisconnection = TimeSpan.Zero;
+                        _state = ClientState.ProcessingData;
+                    }
+                }
+                break;
         }
     }
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
         _state = ClientState.ProcessingData;
+    }
+    
+    public override void OnConnectionDisconnected(Connection connection)
+    {
+        if (_state == ClientState.WaitingForResponse)
+        {
+            _timeSinceDisconnection = TimeSpan.Zero;
+        }
     }
 }
