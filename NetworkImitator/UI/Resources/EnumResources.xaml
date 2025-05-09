@@ -1,0 +1,19 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:networkComponents="clr-namespace:NetworkImitator.NetworkComponents"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    
+    <ObjectDataProvider x:Key="AlgorithmValues" MethodName="GetValues" 
+                       ObjectType="{x:Type system:Enum}">
+        <ObjectDataProvider.MethodParameters>
+            <x:Type TypeName="networkComponents:LoadBalancerAlgorithm"/>
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+    
+    <ObjectDataProvider x:Key="ClientModeValues" MethodName="GetValues" 
+                       ObjectType="{x:Type system:Enum}">
+        <ObjectDataProvider.MethodParameters>
+            <x:Type TypeName="networkComponents:ClientMode"/>
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+</ResourceDictionary>

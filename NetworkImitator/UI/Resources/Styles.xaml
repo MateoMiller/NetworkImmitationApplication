@@ -1,0 +1,7 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="EditableOnlyWhenPausedStyle" TargetType="Control">
+        <Setter Property="IsEnabled"
+                Value="{Binding Path=DataContext.IsPaused, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" />
+    </Style>
+</ResourceDictionary>

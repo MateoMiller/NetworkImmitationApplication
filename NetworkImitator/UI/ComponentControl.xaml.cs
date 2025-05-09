@@ -41,7 +41,6 @@ namespace NetworkImitator.UI
 
             if (_isDragging)
             {
-                //TODO Костыль, работающий только при Grid=0
                 var newPosition = e.GetPosition(null);
                 Component.X = newPosition.X - Width / 2;
                 Component.Y = newPosition.Y - Height / 2;

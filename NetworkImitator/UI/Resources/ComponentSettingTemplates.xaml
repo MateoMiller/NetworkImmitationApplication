@@ -1,0 +1,97 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:networkComponents="clr-namespace:NetworkImitator.NetworkComponents">
+    
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/NetworkImitator;component/UI/Resources/EnumResources.xaml" />
+        <ResourceDictionary Source="/NetworkImitator;component/UI/Resources/Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate x:Key="CommonIpAddressTemplate">
+        <StackPanel>
+            <TextBlock Text="IP адрес"/>
+            <TextBox Text="{Binding IP, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <TextBlock Text="Имя компонента"/>
+            <TextBox Text="{Binding DeviceName, UpdateSourceTrigger=PropertyChanged}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+        </StackPanel>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type networkComponents:Client}">
+        <StackPanel>
+            <TextBlock Text="Режим работы:"/>
+            <ComboBox ItemsSource="{Binding Source={StaticResource ClientModeValues}}"
+                      SelectedItem="{Binding ClientMode}"
+                      Style="{StaticResource EditableOnlyWhenPausedStyle}">  
+            <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0}">
+                                    <Binding />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Text="Период отправки пакетов:"/>
+            <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
+        </StackPanel>
+    </DataTemplate>
+    
+    <DataTemplate DataType="{x:Type networkComponents:Server}">
+        <StackPanel>
+            <TextBlock Text="Время обработки (мс):"/>
+            <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <TextBlock Text="Макс. одновременных пакетов:"/>
+            <TextBox Text="{Binding MaxConcurrentPackets}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <TextBlock>
+                <Run Text="Сейчас обрабатывается пакетов: "/>
+                <Run Text="{Binding GetProcessingLoad, Mode=OneWay}"/>
+                <Run Text=" из "/>
+                <Run Text="{Binding GetTotalLoad, Mode=OneWay}"/>
+            </TextBlock>
+            <TextBlock>
+                <Run Text="В очереди: "/>
+                <Run Text="{Binding GetQueuedMessagesCount, Mode=OneWay}"/>
+            </TextBlock>
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
+        </StackPanel>
+    </DataTemplate>
+    
+    <DataTemplate DataType="{x:Type networkComponents:LoadBalancer}">
+        <StackPanel>
+            <TextBlock Text="Алгоритм балансировки:"/>
+            <ComboBox ItemsSource="{Binding Source={StaticResource AlgorithmValues}}"
+                      SelectedItem="{Binding Algorithm}"
+                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
+        </StackPanel>
+    </DataTemplate>
+    
+    <DataTemplate DataType="{x:Type networkComponents:Connection}">
+        <StackPanel>
+            <TextBlock Text="Настройки соединения" FontWeight="Bold" Margin="0,10,0,5"/>
+            <TextBlock Text="{Binding DisplayName}" FontStyle="Italic"/>
+            <TextBlock Text="Базовое время передачи пакета (мс):"/>
+            <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <TextBlock Text="Время передачи 1 байта (мс):"/>
+            <TextBox Text="{Binding ByteTransferTimeMs, UpdateSourceTrigger=PropertyChanged}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <TextBlock Text="Состояние соединения:" Margin="0,10,0,0"/>
+            <TextBlock>
+                <Run Text="Сообщений в пути: "/>
+                <Run Text="{Binding MessagesInTransitCount, Mode=OneWay}"/>
+            </TextBlock>            
+            <CheckBox Content="Активно" 
+                      IsChecked="{Binding IsActive, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+        </StackPanel>
+    </DataTemplate>
+    
+</ResourceDictionary>
