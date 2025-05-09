@@ -1,7 +1,7 @@
 ﻿<UserControl x:Class="NetworkImitator.UI.Controls.ComponentSettingsPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel>
+    <StackPanel Margin="10 0">
         <TextBlock Text="Настройки" FontWeight="Bold" FontSize="16"/>
         <ContentControl Content="{Binding SelectedComponent}" />
         <ContentControl Content="{Binding SelectedConnection}" />

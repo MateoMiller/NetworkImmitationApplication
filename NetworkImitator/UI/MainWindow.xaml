@@ -16,8 +16,8 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="200"/>
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
@@ -25,12 +25,12 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <controls:ControlPanel Grid.ColumnSpan="3" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" />
+        <controls:ControlPanel Grid.ColumnSpan="3" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" BorderBrush="Black" BorderThickness="0"/>
 
-        <controls:CommandButtonsPanel Grid.Column="1" Grid.Row="1" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" />
+        <controls:CommandButtonsPanel Grid.Column="1" Grid.Row="1" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" BorderBrush="Black" BorderThickness="1"/>
 
-        <controls:NetworkCanvas x:Name="NetworkCanvas" Grid.Column="0" Grid.Row="1" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" />
+        <controls:NetworkCanvas x:Name="NetworkCanvas" Grid.Column="0" Grid.Row="1" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" BorderBrush="Black" BorderThickness="1"/>
 
-        <controls:ComponentSettingsPanel Grid.Column="2" Grid.Row="1" Margin="10" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" />
+        <controls:ComponentSettingsPanel Grid.Column="2" Grid.Row="1" DataContext="{Binding ElementName=MainWindowRoot, Path=DataContext}" BorderBrush="Black"  BorderThickness="1"/>
     </Grid>
 </Window>
