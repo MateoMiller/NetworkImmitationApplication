@@ -18,6 +18,9 @@
                 <x:Type TypeName="networkComponents:ClientMode"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+        <Style x:Key="EditableOnlyWhenPausedStyle" TargetType="Control">
+            <Setter Property="IsEnabled" Value="{Binding DataContext.IsPaused, RelativeSource={RelativeSource AncestorType=Window}}" />
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -26,14 +29,63 @@
             <ColumnDefinition Width="250"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <Border Grid.ColumnSpan="3" Height="40" VerticalAlignment="Top">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                    <Button Command="{Binding TogglePauseCommand}" Width="100" Height="28">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                        <Setter Property="Background" Value="#4CAF50"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Content" Value="Продолжить"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsPaused}" Value="False">
+                                        <Setter Property="Background" Value="#F44336"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="Content" Value="Пауза"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    
+                    <Border Background="{Binding IsPaused}" CornerRadius="3" Padding="8,3">
+                        <TextBlock Foreground="White" FontWeight="SemiBold">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                            <Setter Property="Text" Value="ПАУЗА"/>
+                                            <Setter Property="Background" Value="Red"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsPaused}" Value="False">
+                                            <Setter Property="Text" Value="РАБОТАЕТ"/>
+                                            <Setter Property="Background" Value="Green"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+                <TextBlock Text="Имитатор сетевого взаимодействия" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16"/>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Column="1" Grid.Row="1">
             <Button Content="Добавить компьютер" Command="{Binding AddClientCommand}"/>
             <Button Content="Добавить сервер" Command="{Binding AddServerCommand}"/>
             <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}"/>
             <Button Content="Добавить ребро" Command="{Binding AddConnectionCommand}"/>
         </StackPanel>
-    
-        <Canvas Name="ComponentsCanvas" Grid.Column="0" Background="LightGray" MouseMove="OnCanvasMouseMove">
+        <Canvas Name="ComponentsCanvas" Grid.Column="0" Grid.Row="1" Background="LightGray" MouseMove="OnCanvasMouseMove">
             <ItemsControl ItemsSource="{Binding Components}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -54,7 +106,7 @@
             </ItemsControl>       
         </Canvas>
         
-        <StackPanel Grid.Column="2" Margin="10">
+        <StackPanel Grid.Column="2" Grid.Row="1" Margin="10">
             <TextBlock Text="Настройки" FontWeight="Bold" FontSize="16"/>
             <ContentControl Content="{Binding SelectedComponent}">
                 <ContentControl.Resources>
@@ -63,14 +115,15 @@
                             <TextBlock Text="IP адрес"/>
                             <TextBox Text="{Binding IP, UpdateSourceTrigger=PropertyChanged}" IsEnabled="False" />
                             <TextBlock Text="Имя компонента"/>
-                            <TextBox Text="{Binding DeviceName, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Text="{Binding DeviceName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource EditableOnlyWhenPausedStyle}" />
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Client}">
                         <StackPanel>
                             <TextBlock Text="Режим работы:"/>
                             <ComboBox ItemsSource="{Binding Source={StaticResource ClientModeValues}}"
-                                      SelectedItem="{Binding ClientMode}">
+                                      SelectedItem="{Binding ClientMode}"
+                                      Style="{StaticResource EditableOnlyWhenPausedStyle}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock>
@@ -84,16 +137,19 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                             <TextBlock Text="Период отправки пакетов:"/>
-                            <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource EditableOnlyWhenPausedStyle}" />
                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type networkComponents:Server}">
                         <StackPanel>
                             <TextBlock Text="Время обработки (мс):"/>
-                            <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource EditableOnlyWhenPausedStyle}" />
                             <TextBlock Text="Макс. одновременных пакетов:"/>
-                            <TextBox Text="{Binding MaxConcurrentPackets}" />
+                            <TextBox Text="{Binding MaxConcurrentPackets}" 
+                                     Style="{StaticResource EditableOnlyWhenPausedStyle}" />
                             <TextBlock>
                                 <Run Text="Сейчас обрабатывается пакетов: "/>
                                 <Run Text="{Binding GetProcessingLoad, Mode=OneWay}"/>
@@ -111,7 +167,8 @@
                         <StackPanel>
                             <TextBlock Text="Алгоритм балансировки:"/>
                             <ComboBox ItemsSource="{Binding Source={StaticResource AlgorithmValues}}"
-                                      SelectedItem="{Binding Algorithm}"/>
+                                      SelectedItem="{Binding Algorithm}"
+                                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
                         </StackPanel>
                     </DataTemplate>
@@ -125,15 +182,19 @@
                             <TextBlock Text="Настройки соединения" FontWeight="Bold" Margin="0,10,0,5"/>
                             <TextBlock Text="{Binding DisplayName}" FontStyle="Italic"/>
                             <TextBlock Text="Базовое время передачи пакета (мс):"/>
-                            <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox Text="{Binding TimeToProcessMs, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource EditableOnlyWhenPausedStyle}" />
                             <TextBlock Text="Время передачи 1 байта (мс):"/>
-                            <TextBox Text="{Binding ByteTransferTimeMs, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBlock Text="Состояние соединения:"/>
+                            <TextBox Text="{Binding ByteTransferTimeMs, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource EditableOnlyWhenPausedStyle}" />
+                            <TextBlock Text="Состояние соединения:" Margin="0,10,0,0"/>
                             <TextBlock>
                                 <Run Text="Сообщений в пути: "/>
                                 <Run Text="{Binding MessagesInTransitCount, Mode=OneWay}"/>
                             </TextBlock>            
-                            <CheckBox Content="Активно" IsChecked="{Binding IsActive, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox Content="Активно" 
+                                      IsChecked="{Binding IsActive, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
                         </StackPanel>
                     </DataTemplate>
                 </ContentControl.Resources>

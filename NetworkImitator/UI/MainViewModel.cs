@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using NetworkImitator.NetworkComponents;
 using NetworkImitator.UI.Commands;
 using Component = NetworkImitator.NetworkComponents.Component;
@@ -16,9 +17,15 @@ public partial class MainViewModel : ObservableObject
     
     [ObservableProperty] private Component? _selectedComponent;
     [ObservableProperty] private Connection? _selectedConnection;
+    [ObservableProperty] private bool _isPaused;
+
+    public bool CanEditSettings => IsPaused;
 
     public void Update(TimeSpan totalElapsed, int updatesPerOneUiRedraw)
     {
+        if (IsPaused)
+            return;
+
         var stepDuration = TimeSpan.FromMilliseconds(totalElapsed.TotalMilliseconds / updatesPerOneUiRedraw);
 
         for (var i = 0; i < updatesPerOneUiRedraw; i++)
@@ -39,6 +46,7 @@ public partial class MainViewModel : ObservableObject
     public ICommand AddServerCommand { get; }
     public ICommand AddLoadBalancerCommand { get; }
     public ICommand AddConnectionCommand { get; }
+    public ICommand TogglePauseCommand { get; }
 
     public MainViewModel()
     {
@@ -46,6 +54,15 @@ public partial class MainViewModel : ObservableObject
         AddServerCommand = new AddServerCommand(this);
         AddLoadBalancerCommand = new AddLoadBalancerCommand(this, LoadBalancerAlgorithm.RoundRobin);
         AddConnectionCommand = new AddConnectionCommand(this);
+        TogglePauseCommand = new RelayCommand(TogglePause);
+        
+        IsPaused = true;
+    }
+    
+    private void TogglePause()
+    {
+        IsPaused = !IsPaused;
+        OnPropertyChanged(nameof(CanEditSettings));
     }
 
     public void AddVertex(Component component)

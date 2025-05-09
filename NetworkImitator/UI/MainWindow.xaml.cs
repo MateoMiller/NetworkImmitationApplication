@@ -93,6 +93,7 @@ public partial class MainWindow : Window
 
     private void RedrawEverything()
     {
+        //TODO Потенциально надо будет убрать в xaml
         var enumerator = ComponentsCanvas.Children.GetEnumerator();
         using var enumerator1 = enumerator as IDisposable;
         var toRemove = new List<UIElement>();
