@@ -10,7 +10,8 @@ public partial class Connection : ObservableObject
     public Component FirstComponent { get; set; }
     public Component SecondComponent { get; set; }
 
-    [ObservableProperty] private int _timeToProcessMs = 200;
+    [ObservableProperty] private int _timeToProcessMs = 50;
+    [ObservableProperty] private double _byteTransferTimeMs = 0.1;
     [ObservableProperty] private bool _isSelected;
 
     private bool _isActive = true;
@@ -40,7 +41,7 @@ public partial class Connection : ObservableObject
     private readonly ObservableCollection<MessageInTransit> _messagesInTransit = new();
 
     public int MessagesInTransitCount => _messagesInTransit.Count;
-    
+
     public string DisplayName => $"Соединение {FirstComponent.DeviceName} → {SecondComponent.DeviceName} ({(IsActive ? "Активно" : "Отключено")})";
     
     public Point? TemporaryPosition { get; set; }
@@ -54,6 +55,11 @@ public partial class Connection : ObservableObject
         return new SolidColorBrush(GetColor(_messagesInTransit.Count, 4));
     }
 
+    private double GetTotalTransferTimeMs(Message message)
+    {
+        return TimeToProcessMs + message.SizeInBytes * ByteTransferTimeMs;
+    }
+
     public void ProcessTick(TimeSpan elapsed)
     {
         if (!IsActive)
@@ -64,7 +70,10 @@ public partial class Connection : ObservableObject
         foreach (var messageInTransit in _messagesInTransit.ToArray())
         {
             messageInTransit.ElapsedTime += elapsed;
-            if (messageInTransit.ElapsedTime.TotalMilliseconds > TimeToProcessMs)
+
+            var totalTransferTimeMs = GetTotalTransferTimeMs(messageInTransit.Message);
+
+            if (messageInTransit.ElapsedTime.TotalMilliseconds >= totalTransferTimeMs)
             {
                 var receiver = FirstComponent.IP == messageInTransit.Message.ToIP ? FirstComponent : SecondComponent;
                 receiver.ReceiveData(this, messageInTransit.Message);
