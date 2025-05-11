@@ -1,17 +1,19 @@
 ﻿using System.Windows.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 using NetworkImitator.Extensions;
 using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents;
 
-public class Client : Component
+public partial class Client : Component
 {
     private ClientState _state = ClientState.ProcessingData;
     private TimeSpan _timeSinceLastSendPacket = TimeSpan.Zero;
     private TimeSpan _timeSinceDisconnection = TimeSpan.Zero;
     private const int ReconnectAttemptMs = 3000;
 
-    public int SendingPacketPeriod { get; set; }
+    [ObservableProperty] private int _sendingPacketPeriod;
+    [ObservableProperty] private int _dataSizeInBytes = 1024;
 
     private ClientMode _clientMode = ClientMode.Http;
     public ClientMode ClientMode
@@ -53,7 +55,7 @@ public class Client : Component
                     foreach (var connection in Connections.Where(c => c.IsActive))
                     {
                         var receiver = connection.GetOppositeComponent(IP);
-                        var msg = new Message(IP, receiver!.IP, RandomExtensions.RandomWord(), IP);
+                        var msg = new Message(IP, receiver!.IP, RandomExtensions.RandomSentence(DataSizeInBytes), IP);
                 
                         connection.TransferData(msg);
                         

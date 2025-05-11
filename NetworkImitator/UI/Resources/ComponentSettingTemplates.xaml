@@ -37,6 +37,9 @@
             <TextBlock Text="Период отправки пакетов:"/>
             <TextBox Text="{Binding SendingPacketPeriod, UpdateSourceTrigger=PropertyChanged}" 
                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <TextBlock Text="Размер пакета в байтах:"/>
+            <TextBox Text="{Binding DataSizeInBytes, UpdateSourceTrigger=PropertyChanged}" 
+                     Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
         </StackPanel>
     </DataTemplate>
