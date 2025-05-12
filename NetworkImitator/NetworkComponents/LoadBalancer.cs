@@ -25,7 +25,7 @@ namespace NetworkImitator.NetworkComponents
             if (_servers.Count == 0)
             {
                 Console.WriteLine("LoadBalancer: No servers available to handle the request.");
-                connection.TransferData(new Message(IP, message.FromIP, "No servers available to handle the request.", message.OriginalSenderIp));
+                connection.TransferData(new Message(IP, message.FromIP, "No servers available to handle the request."u8.ToArray(), message.OriginalSenderIp));
                 return;
             }
 

@@ -1,4 +1,5 @@
-﻿using System.Windows.Media.Imaging;
+﻿using System.Text;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NetworkImitator.Extensions;
 using NetworkImitator.UI;
@@ -61,7 +62,7 @@ public partial class Server : Component
             if (connection != null)
             {
                 var content = RandomExtensions.RandomWord();
-                connection.TransferData(new Message(IP, toIp, content, process.Message.OriginalSenderIp));
+                connection.TransferData(new Message(IP, toIp, Encoding.ASCII.GetBytes(content), process.Message.OriginalSenderIp));
             }
 
             _processing.Remove(process);

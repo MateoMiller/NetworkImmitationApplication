@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Text;
+using System.Windows;
 
 namespace NetworkImitator;
 
@@ -7,4 +8,8 @@ namespace NetworkImitator;
 /// </summary>
 public partial class App : Application
 {
+    public App()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
 }

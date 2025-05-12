@@ -1,7 +1,7 @@
 ﻿<UserControl x:Class="NetworkImitator.UI.Controls.CommandButtonsPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel Margin="10 0 ">
+    <StackPanel Margin="5 0 ">
         <Button Content="Добавить компьютер" Command="{Binding AddClientCommand}" />
         <Button Content="Добавить сервер" Command="{Binding AddServerCommand}" />
         <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}" />

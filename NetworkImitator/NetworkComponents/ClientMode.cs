@@ -3,5 +3,6 @@
 public enum ClientMode
 {
     Http,
-    Ping
+    Ping,
+    FileTransfer
 }

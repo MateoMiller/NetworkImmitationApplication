@@ -5,6 +5,7 @@
              StartupUri="/UI/MainWindow.xaml">
     <Application.Resources>
         <ui:ComponentToBrushConverter x:Key="ComponentToBrushConverter" />
+        <ui:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
         <ui:SelectionToBrushConverter x:Key="SelectionToBrushConverter" />
     </Application.Resources>
 </Application>
