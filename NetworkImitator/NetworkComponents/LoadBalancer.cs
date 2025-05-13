@@ -75,7 +75,11 @@ namespace NetworkImitator.NetworkComponents
                 
                 if (connection != null)
                 {
-                    var modifiedMessage = message.CreateWithModifiedIPs(IP, serverIp);
+                    var modifiedMessage = message with
+                    {
+                        FromIP = IP,
+                        ToIP = serverIp
+                    };
                     connection.TransferData(modifiedMessage);
                 }
                 else
@@ -91,17 +95,19 @@ namespace NetworkImitator.NetworkComponents
             var clientConnection = Connections.FirstOrDefault(x => x.IsActive && x.GetComponent(message.OriginalSenderIp) != null);
             if (clientConnection != null)
             {
-                var responseMessage = new Message(IP, message.OriginalSenderIp, message.Content, message.OriginalSenderIp);
+                var responseMessage = message with
+                {
+                    FromIP = IP,
+                    ToIP = message.OriginalSenderIp
+                };
                 clientConnection.TransferData(responseMessage);
             }
             else
             {
                 Console.WriteLine($"LoadBalancer: Failed to find active connection to client {message.OriginalSenderIp}");
-                
-                // Если соединение с клиентом неактивно, удаляем маппинг
-                if (_clientServerMapping.ContainsKey(message.OriginalSenderIp))
+
+                if (_clientServerMapping.Remove(message.OriginalSenderIp))
                 {
-                    _clientServerMapping.Remove(message.OriginalSenderIp);
                     Console.WriteLine($"LoadBalancer: соединение с клиентом {message.OriginalSenderIp} неактивно, маппинг удален");
                 }
             }

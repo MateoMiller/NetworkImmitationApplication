@@ -14,8 +14,6 @@ public partial class Client : Component
 {
     private ClientState _state = ClientState.ProcessingData;
     private TimeSpan _timeSinceLastSendPacket = TimeSpan.Zero;
-    private TimeSpan _timeSinceDisconnection = TimeSpan.Zero;
-    private const int ReconnectAttemptMs = 3000;
 
     [ObservableProperty] private int _sendingPacketPeriod;
     [ObservableProperty] private int _dataSizeInBytes = 1024;
@@ -107,14 +105,21 @@ public partial class Client : Component
                     {
                         var receiver = connection.GetOppositeComponent(IP);
                         if (receiver == null) continue;
+                        if (MessagesQueue.Count == 0)
+                        {
+                            if (ClientMode == ClientMode.FileTransfer)
+                                UpdateFileTransferProgress();
+                            GetNewMessageQueueForTransfer(receiver);
+                        }
 
-                        var message = GetMessageForTransfer(receiver);
-                        if (message == null)
+                        if (!MessagesQueue.TryDequeue(out var message))
+                        {
                             continue;
+                        }
 
                         connection.TransferData(message);
                         
-                        if (ClientMode == ClientMode.Http)
+                        if (ClientMode is ClientMode.Http or ClientMode.FileTransfer)
                         {
                             _state = ClientState.WaitingForResponse;
                         }
@@ -123,43 +128,39 @@ public partial class Client : Component
                 break;
                 
             case ClientState.WaitingForResponse:
-                var hasActiveConnections = Connections.Any(c => c.IsActive);
-                if (!hasActiveConnections)
-                {
-                    _timeSinceDisconnection += elapsed;
-                    
-                    if (_timeSinceDisconnection.TotalMilliseconds >= ReconnectAttemptMs)
-                    {
-                        _timeSinceDisconnection = TimeSpan.Zero;
-                        _state = ClientState.ProcessingData;
-                    }
-                }
                 break;
         }
     }
 
-    private Message GetMessageForTransfer(Component receiver)
+    private void GetNewMessageQueueForTransfer(Component receiver)
     {
         if (ClientMode == ClientMode.FileTransfer)
         {
             if (_fileData == null || FileTransferCompleted)
             {
-                return null;
+                return;
             }
 
             var chunkSize = Math.Min(FileSizeBytes - _currentFilePosition, DataSizeInBytes);
             var chunk = _fileData[_currentFilePosition..(_currentFilePosition + chunkSize)];
-            var message = new Message(IP, receiver.IP, chunk, IP);
+            var compressedChuck = CompressionUtil.Compress(chunk);
+            var messagesToSent = compressedChuck.Chunk(MaxPacketSize)
+                .Select(x => new Message(IP, receiver.IP, x, IP, false, true))
+                .ToArray();
+            messagesToSent[^1].IsFinalMessage = true;
+            MessagesQueue = new Queue<Message>(messagesToSent);
+            
             _currentFilePosition += chunkSize;
 
-            UpdateFileTransferProgress();
-
-            return message;
+            return;
         }
 
         var randomContent = RandomExtensions.RandomSentence(DataSizeInBytes);
-        return new Message(IP, receiver.IP, Encoding.ASCII.GetBytes(randomContent), IP);
+        var content = Encoding.ASCII.GetBytes(randomContent);
+        MessagesQueue.Enqueue(new Message(IP, receiver.IP, content, IP));
     }
+
+    private Queue<Message> MessagesQueue { get; set; } = new();
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
@@ -170,8 +171,9 @@ public partial class Client : Component
     {
         if (_state == ClientState.WaitingForResponse)
         {
-            _timeSinceDisconnection = TimeSpan.Zero;
+            _state = ClientState.ProcessingData;
         }
     }
 
+    private const int MaxPacketSize = 65535;
 }

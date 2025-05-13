@@ -11,8 +11,7 @@ public partial class Server : Component
     [ObservableProperty] private int _maxConcurrentPackets;
     [ObservableProperty] private int _timeToProcessMs;
 
-    private readonly List<ProcessingProcess> _processing = [];
-    private readonly Queue<Message> _messagesQueue = new();
+    private readonly Dictionary<string, ClientProcessingContext> _processingContexts = new();
 
     public Server(double x, double y, int timeToProcessMs, int maxConcurrentPackets, MainViewModel viewModel) : base(viewModel, x, y)
     {
@@ -24,88 +23,148 @@ public partial class Server : Component
 
     public override void ReceiveData(Connection connection, Message message)
     {
-        if (_processing.Count < MaxConcurrentPackets)
+        if (!_processingContexts.TryGetValue(message.OriginalSenderIp, out var context))
         {
-            _processing.Add(new ProcessingProcess(message, TimeSpan.FromMilliseconds(TimeToProcessMs), connection));
+            context = new ClientProcessingContext(message.OriginalSenderIp,  connection, TimeSpan.FromMilliseconds(TimeToProcessMs));
+            _processingContexts.Add(message.OriginalSenderIp, context);
+
         }
-        else
+
+        context.AddMessage(message);
+
+        if (message is { IsFinalMessage: false, IsCompressed: true })
         {
-            _messagesQueue.Enqueue(message);
+            //ACK. Возможно для Ping не надо делать. TODO
+            connection.TransferData(new Message(IP, message.FromIP, "ACK"u8.ToArray(), message.OriginalSenderIp));
         }
-        
+
         OnPropertyChanged(nameof(GetProcessingLoad));
         OnPropertyChanged(nameof(GetQueuedMessagesCount));
         OnPropertyChanged(nameof(GetTotalLoad));
     }
     
-    public int GetProcessingLoad => _processing.Count;
-    
-    public int GetQueuedMessagesCount => _messagesQueue.Count;
-    
-    public int GetTotalLoad => _processing.Count + _messagesQueue.Count;
+    public int GetProcessingLoad => _processingContexts.Count(x => x.Value.State != ProcessingState.Idle);
+    public int GetQueuedMessagesCount => _processingContexts.Count(x => x.Value.State == ProcessingState.Idle);
+    public int GetTotalLoad => _processingContexts.Count;
 
     public override void ProcessTick(TimeSpan elapsed)
     {
-        var finished = new List<ProcessingProcess>();
-        foreach (var process in _processing)
-        {
-            process.Elapsed += elapsed;
-            if (process.Elapsed > process.TimeToProcess)
-                finished.Add(process);
-        }
+        var finishedContexts = new List<ClientProcessingContext>();
 
-        foreach (var process in finished)
+        var precessed = 0;
+        foreach (var context in _processingContexts.Values)
         {
-            var toIp = process.Message.FromIP;
-            var connection = GetActiveConnectionTo(toIp);
-            
-            if (connection != null)
+            if (context.State != ProcessingState.Idle)
             {
-                var content = RandomExtensions.RandomWord();
-                connection.TransferData(new Message(IP, toIp, Encoding.ASCII.GetBytes(content), process.Message.OriginalSenderIp));
+                context.ProcessTick(elapsed);
+                precessed++;
+            }
+            if (context.State == ProcessingState.FinishedProcessing)
+            {
+                finishedContexts.Add(context);
             }
 
-            _processing.Remove(process);
+            if (precessed >= _maxConcurrentPackets)
+            {
+                break;
+            }
         }
 
-        while (_processing.Count < MaxConcurrentPackets && _messagesQueue.Count > 0)
+        foreach (var context in finishedContexts)
         {
-            var nextMessage = _messagesQueue.Dequeue();
-            _processing.Add(new ProcessingProcess(nextMessage, TimeSpan.FromMilliseconds(TimeToProcessMs), null));
+            _processingContexts.Remove(context.ClientIp);
+            var connection = context.Connection;
+            connection.TransferData(new Message(IP, connection.GetOppositeComponent(IP)!.IP, "Finished processing"u8.ToArray(), context.ClientIp));
         }
-
+    
         OnPropertyChanged(nameof(GetProcessingLoad));
         OnPropertyChanged(nameof(GetQueuedMessagesCount));
         OnPropertyChanged(nameof(GetTotalLoad));
     }
-    
+
     public override void OnConnectionDisconnected(Connection connection)
     {
-        var processesToRemove = _processing
-            .Where(p => p.SourceConnection == connection)
+        var contextsToReset = _processingContexts.Keys
+            .Where(clientIp => connection.GetComponent(clientIp) != null)
             .ToList();
-        
-        foreach (var process in processesToRemove)
+        foreach (var clientIp in contextsToReset)
         {
-            _processing.Remove(process);
+            _processingContexts.Remove(clientIp);
         }
         
         OnPropertyChanged(nameof(GetProcessingLoad));
         OnPropertyChanged(nameof(GetTotalLoad));
     }
 
-    private class ProcessingProcess
+    private enum ProcessingState
     {
-        public Message Message { get; set; }
-        public TimeSpan TimeToProcess { get; }
-        public TimeSpan Elapsed { get; set; } = TimeSpan.Zero;
-        public Connection? SourceConnection { get; }
+        Idle,
+        DecompressingData,
+        ProcessingData,
+        FinishedProcessing,
+        SendingResponse
+    }
+
+    private class ClientProcessingContext
+    {
+        public ProcessingState State { get; set; } = ProcessingState.Idle;
+        public string ClientIp { get; }
+        public Connection Connection { get; }
+        public TimeSpan TimeToProcessOnePocket { get; set; }
+        public TimeSpan TimeToDecompress { get; set; }
+        public List<Message> ProcessingMessages { get; set; } = new();
+
+        public TimeSpan TotalElapsed { get; set; } = TimeSpan.Zero;
+        public TimeSpan CurrentStateElapsedTime { get; set; } = TimeSpan.Zero;
         
-        public ProcessingProcess(Message message, TimeSpan timeToProcess, Connection? sourceConnection)
+        public ClientProcessingContext(string ClientIp, Connection connection, TimeSpan timeToProcess)
         {
-            Message = message;
-            TimeToProcess = timeToProcess;
-            SourceConnection = sourceConnection;
+            this.ClientIp = ClientIp;
+            Connection = connection;
+            TimeToProcessOnePocket = timeToProcess;
+        }
+
+        public void AddMessage(Message message)
+        {
+            ProcessingMessages.Add(message);
+            if (message.IsFinalMessage)
+            {
+                if (message.IsCompressed)
+                {
+                    State = ProcessingState.DecompressingData;
+                    var totalContent = ProcessingMessages.SelectMany(x => x.Content).ToArray();
+                    (_, TimeToDecompress) = totalContent.DecompressAndMeasure();
+                    CurrentStateElapsedTime = TimeSpan.Zero;
+                }
+                else
+                {
+                    State = ProcessingState.ProcessingData;
+                    CurrentStateElapsedTime = TimeSpan.Zero;
+                }
+            }
+        }
+
+        public void ProcessTick(TimeSpan elapsed)
+        {
+            TotalElapsed += elapsed;
+            CurrentStateElapsedTime += elapsed;
+
+            switch (State)
+            {
+                case ProcessingState.DecompressingData:
+                    if (CurrentStateElapsedTime >= TimeToDecompress)
+                    {
+                        State = ProcessingState.ProcessingData;
+                        CurrentStateElapsedTime = TimeSpan.Zero;
+                    }
+                    break;
+                case ProcessingState.ProcessingData:
+                    if (CurrentStateElapsedTime >= TimeToProcessOnePocket)
+                    {
+                        State = ProcessingState.FinishedProcessing;
+                    }
+                    break;
+            }
         }
     }
 }
