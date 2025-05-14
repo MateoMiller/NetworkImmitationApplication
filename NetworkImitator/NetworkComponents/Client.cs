@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using NetworkImitator.Extensions;
+using NetworkImitator.NetworkComponents.Metrics;
 using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents;
@@ -119,6 +120,8 @@ public partial class Client : Component
                         continue;
                     }
 
+                    message.UpdateMessageState(MessageProcessingState.InTransit, "Client", IP);
+
                     connection.TransferData(message);
 
                     if (ClientMode is ClientMode.Http or ClientMode.FileTransfer)
@@ -130,6 +133,23 @@ public partial class Client : Component
             case ClientState.WaitingForResponse:
                 break;
         }
+
+        CollectClientMetrics();
+    }
+
+    private void CollectClientMetrics()
+    {
+        var clientMetrics = new ClientMetrics(
+            IP, 
+            _context.State, 
+            _context.TimeInCurrentState,
+            _context.TotalElapsedTime,
+            MessagesQueue.Count,
+            FileTransferProgress,
+            FileTransferStatus
+        );
+        
+        MetricsCollector.Instance.AddClientMetrics(clientMetrics);
     }
 
     private void GetNewMessageQueueForTransfer(Component receiver)
@@ -165,6 +185,9 @@ public partial class Client : Component
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
+        // Обновление метрики сообщения
+        currentMessage.UpdateMessageState(MessageProcessingState.Received, "Client", IP);
+        
         if (MessagesQueue.Count != 0)
             _context.ChangeState(ClientState.SendingData);
         else

@@ -26,6 +26,12 @@
                         </Style>
                     </Button.Style>
                 </Button>
+                <Button Command="{Binding SaveMetricsCommand}" Width="120" Height="28" Content="Сохранить метрики">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                        </Style>
+                    </Button.Style>
+                </Button>
             </StackPanel>
             <TextBlock Text="Имитатор сетевого взаимодействия" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16"/>
         </Grid>

@@ -2,6 +2,7 @@
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using NetworkImitator.Extensions;
+using NetworkImitator.NetworkComponents.Metrics;
 using NetworkImitator.UI;
 
 namespace NetworkImitator.NetworkComponents;
@@ -27,15 +28,19 @@ public partial class Server : Component
         {
             context = new ClientProcessingContext(message.OriginalSenderIp,  connection, TimeSpan.FromMilliseconds(TimeToProcessMs));
             _processingContexts.Add(message.OriginalSenderIp, context);
-
         }
 
         context.AddMessage(message);
+        
+        // Обновление метрик сообщения
+        message.UpdateMessageState(MessageProcessingState.Received, "Server", IP);
 
         if (message is { IsFinalMessage: false, IsCompressed: true })
         {
             //ACK. Возможно для Ping не надо делать. TODO
-            connection.TransferData(new Message(IP, message.FromIP, "ACK"u8.ToArray(), message.OriginalSenderIp));
+            var ackMessage = new Message(IP, message.FromIP, "ACK"u8.ToArray(), message.OriginalSenderIp);
+            message.UpdateMessageState(MessageProcessingState.Acknowledged, "Server", IP);
+            connection.TransferData(ackMessage);
         }
 
         OnPropertyChanged(nameof(GetProcessingLoad));
@@ -58,6 +63,13 @@ public partial class Server : Component
             {
                 context.ProcessTick(elapsed);
                 precessed++;
+                
+                // Обновление метрик сообщений
+                foreach (var message in context.ProcessingMessages)
+                {
+                    var messageState = MapProcessingStateToMessageState(context.State);
+                    message.UpdateMessageState(messageState, "Server", IP);
+                }
             }
             if (context.State == ProcessingState.FinishedProcessing)
             {
@@ -74,12 +86,49 @@ public partial class Server : Component
         {
             _processingContexts.Remove(context.ClientIp);
             var connection = context.Connection;
-            connection.TransferData(new Message(IP, connection.GetOppositeComponent(IP)!.IP, "Finished processing"u8.ToArray(), context.ClientIp));
+            var responseMessage = new Message(IP, connection.GetOppositeComponent(IP)!.IP, "Finished processing"u8.ToArray(), context.ClientIp);
+            
+            // Обновление метрик сообщений перед удалением контекста
+            foreach (var message in context.ProcessingMessages)
+            {
+                message.UpdateMessageState(MessageProcessingState.Processed, "Server", IP);
+            }
+            
+            connection.TransferData(responseMessage);
         }
     
+        // Сбор серверных метрик
+        CollectServerMetrics();
+        
         OnPropertyChanged(nameof(GetProcessingLoad));
         OnPropertyChanged(nameof(GetQueuedMessagesCount));
         OnPropertyChanged(nameof(GetTotalLoad));
+    }
+
+    private void CollectServerMetrics()
+    {
+        var metrics = new ServerMetrics(IP, GetProcessingLoad, GetQueuedMessagesCount, GetTotalLoad);
+        
+        // Добавление информации о состоянии клиентских контекстов
+        foreach (var context in _processingContexts)
+        {
+            metrics.ClientContextStates[context.Key] = context.Value.State;
+        }
+        
+        MetricsCollector.Instance.AddServerMetrics(metrics);
+    }
+    
+    private MessageProcessingState MapProcessingStateToMessageState(ProcessingState state)
+    {
+        return state switch
+        {
+            ProcessingState.Idle => MessageProcessingState.Received,
+            ProcessingState.DecompressingData => MessageProcessingState.Decompressing,
+            ProcessingState.ProcessingData => MessageProcessingState.Processing,
+            ProcessingState.FinishedProcessing => MessageProcessingState.Processed,
+            ProcessingState.SendingResponse => MessageProcessingState.Processed,
+            _ => MessageProcessingState.Received
+        };
     }
 
     public override void OnConnectionDisconnected(Connection connection)
@@ -96,7 +145,7 @@ public partial class Server : Component
         OnPropertyChanged(nameof(GetTotalLoad));
     }
 
-    private enum ProcessingState
+    public enum ProcessingState
     {
         Idle,
         DecompressingData,
@@ -127,6 +176,7 @@ public partial class Server : Component
         public void AddMessage(Message message)
         {
             ProcessingMessages.Add(message);
+            
             if (message.IsFinalMessage)
             {
                 if (message.IsCompressed)
@@ -135,11 +185,17 @@ public partial class Server : Component
                     var totalContent = ProcessingMessages.SelectMany(x => x.Content).ToArray();
                     (_, TimeToDecompress) = totalContent.DecompressAndMeasure();
                     CurrentStateElapsedTime = TimeSpan.Zero;
+                    
+                    // Обновление метрик сообщения
+                    message.UpdateMessageState(MessageProcessingState.Decompressing, "Server", Connection.FirstComponent.IP);
                 }
                 else
                 {
                     State = ProcessingState.ProcessingData;
                     CurrentStateElapsedTime = TimeSpan.Zero;
+                    
+                    // Обновление метрик сообщения
+                    message.UpdateMessageState(MessageProcessingState.Processing, "Server", Connection.FirstComponent.IP);
                 }
             }
         }
@@ -156,12 +212,24 @@ public partial class Server : Component
                     {
                         State = ProcessingState.ProcessingData;
                         CurrentStateElapsedTime = TimeSpan.Zero;
+                        
+                        // Обновление метрик сообщений
+                        foreach (var message in ProcessingMessages)
+                        {
+                            message.UpdateMessageState(MessageProcessingState.Processing, "Server", Connection.FirstComponent.IP);
+                        }
                     }
                     break;
                 case ProcessingState.ProcessingData:
                     if (CurrentStateElapsedTime >= TimeToProcessOnePocket)
                     {
                         State = ProcessingState.FinishedProcessing;
+                        
+                        // Обновление метрик сообщений
+                        foreach (var message in ProcessingMessages)
+                        {
+                            message.UpdateMessageState(MessageProcessingState.Processed, "Server", Connection.FirstComponent.IP);
+                        }
                     }
                     break;
             }

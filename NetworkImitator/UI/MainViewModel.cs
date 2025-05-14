@@ -3,7 +3,9 @@ using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using NetworkImitator.NetworkComponents;
+using NetworkImitator.NetworkComponents.Metrics;
 using NetworkImitator.UI.Commands;
 using Component = NetworkImitator.NetworkComponents.Component;
 
@@ -47,6 +49,7 @@ public partial class MainViewModel : ObservableObject
     public ICommand AddLoadBalancerCommand { get; }
     public ICommand AddConnectionCommand { get; }
     public ICommand TogglePauseCommand { get; }
+    public ICommand SaveMetricsCommand { get; }
 
     public MainViewModel()
     {
@@ -55,8 +58,39 @@ public partial class MainViewModel : ObservableObject
         AddLoadBalancerCommand = new AddLoadBalancerCommand(this, LoadBalancerAlgorithm.RoundRobin);
         AddConnectionCommand = new AddConnectionCommand(this);
         TogglePauseCommand = new RelayCommand(TogglePause);
+        SaveMetricsCommand = new RelayCommand(SaveMetrics);
         
         IsPaused = true;
+    }
+    
+    private void SaveMetrics()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Выберите папку для сохранения метрик",
+            FileName = "metrics", // Заглушка для имени файла
+            Filter = "Все файлы|*.*",
+            CheckFileExists = false,
+            OverwritePrompt = false
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            var folderPath = System.IO.Path.GetDirectoryName(dialog.FileName);
+            
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                MessageBox.Show("Не выбрана папка для сохранения", "Ошибка", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            
+            if (MetricsCollector.Instance.SaveMetricsToFile(folderPath))
+            {
+                MessageBox.Show($"Метрики успешно сохранены в папку:\n{folderPath}", 
+                    "Сохранение метрик", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
     }
     
     private void TogglePause()

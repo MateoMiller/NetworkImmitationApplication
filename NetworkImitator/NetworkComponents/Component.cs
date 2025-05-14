@@ -40,6 +40,8 @@ public abstract partial class Component : ObservableObject
     {
     }
     
+    public string ComponentType => GetType().Name;
+    
     protected Connection? GetActiveConnectionTo(string targetIp)
     {
         return Connections.FirstOrDefault(c => c.IsActive && 

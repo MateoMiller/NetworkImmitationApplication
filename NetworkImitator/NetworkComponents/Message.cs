@@ -1,4 +1,6 @@
-﻿namespace NetworkImitator.NetworkComponents;
+﻿using NetworkImitator.NetworkComponents.Metrics;
+
+namespace NetworkImitator.NetworkComponents;
 
 public record Message
 {
@@ -21,5 +23,25 @@ public record Message
         IsFinalMessage = isFinalMessage;
         SizeInBytes = content.Length;
         IsCompressed = isCompressed;
+        
+        // Регистрация метрики сообщения при создании
+        var messageMetrics = new MessageMetrics(this, MessageProcessingState.Created, 
+            "Client", fromIP);
+        MetricsCollector.Instance.AddMessageMetrics(messageMetrics);
+    }
+    
+    // Метод для обновления состояния метрик сообщения
+    public void UpdateMessageState(MessageProcessingState state, string processorType, string processorIp)
+    {
+        /*var metrics = MetricsCollector.Instance.GetMessageMetrics(MessageId);
+        if (metrics != null)
+        {
+            metrics.UpdateState(state);
+        }
+        else
+        {
+            metrics = new MessageMetrics(this, state, processorType, processorIp);
+            MetricsCollector.Instance.AddOrUpdateMessageMetrics(metrics);
+        }*/
     }
 }
