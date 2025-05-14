@@ -13,8 +13,6 @@ namespace NetworkImitator.NetworkComponents;
 
 public partial class Client : Component
 {
-    private TimeSpan _timeSinceLastSendPacket = TimeSpan.Zero;
-
     [ObservableProperty] private int _sendingPacketPeriod;
     [ObservableProperty] private int _dataSizeInBytes = 1024;
 
@@ -22,11 +20,12 @@ public partial class Client : Component
     [ObservableProperty] private double _fileTransferProgress;
     [ObservableProperty] private string _fileTransferStatus = "Не начато";
     [ObservableProperty] private int _fileSizeBytes;
+    [ObservableProperty] private bool _isCompressingEnabled;
 
     private byte[] _fileData;
     private int _currentFilePosition;
     private bool FileTransferCompleted => FileTransferProgress >= 100;
-    
+    private readonly Queue<Message> _messagesQueue = new();
     private readonly ClientContext _context;
 
     private ClientMode _clientMode = ClientMode.FileTransfer;
@@ -108,14 +107,14 @@ public partial class Client : Component
                 {
                     var receiver = connection.GetOppositeComponent(IP);
                     if (receiver == null) continue;
-                    if (MessagesQueue.Count == 0)
+                    if (_messagesQueue.Count == 0)
                     {
                         if (ClientMode == ClientMode.FileTransfer)
                             UpdateFileTransferProgress();
-                        GetNewMessageQueueForTransfer(receiver);
+                        UpdateMessageQueueForTransfer(receiver);
                     }
 
-                    if (!MessagesQueue.TryDequeue(out var message))
+                    if (!_messagesQueue.TryDequeue(out var message))
                     {
                         continue;
                     }
@@ -144,7 +143,7 @@ public partial class Client : Component
             _context.State, 
             _context.TimeInCurrentState,
             _context.TotalElapsedTime,
-            MessagesQueue.Count,
+            _messagesQueue.Count,
             FileTransferProgress,
             FileTransferStatus
         );
@@ -152,7 +151,7 @@ public partial class Client : Component
         MetricsCollector.Instance.AddClientMetrics(clientMetrics);
     }
 
-    private void GetNewMessageQueueForTransfer(Component receiver)
+    private void UpdateMessageQueueForTransfer(Component receiver)
     {
         if (ClientMode == ClientMode.FileTransfer)
         {
@@ -162,15 +161,8 @@ public partial class Client : Component
             }
 
             var chunkSize = Math.Min(FileSizeBytes - _currentFilePosition, DataSizeInBytes);
-            var chunk = _fileData[_currentFilePosition..(_currentFilePosition + chunkSize)];
-            var (compressedChuck, timeToCompress) = chunk.CompressAndMeasure();
-            var messagesToSent = compressedChuck.Chunk(MaxPacketSize)
-                .Select(x => new Message(IP, receiver.IP, x, IP, false, true))
-                .ToArray();
-            messagesToSent[^1].IsFinalMessage = true;
-            MessagesQueue = new Queue<Message>(messagesToSent);
-            _context.TimeToCompress = timeToCompress;
-            
+            var fileChunk = _fileData[_currentFilePosition..(_currentFilePosition + chunkSize)];
+            QueueContent(receiver, fileChunk);
             _currentFilePosition += chunkSize;
 
             return;
@@ -178,17 +170,35 @@ public partial class Client : Component
 
         var randomContent = RandomExtensions.RandomSentence(DataSizeInBytes);
         var content = Encoding.ASCII.GetBytes(randomContent);
-        MessagesQueue.Enqueue(new Message(IP, receiver.IP, content, IP));
+        QueueContent(receiver, content);
     }
 
-    private Queue<Message> MessagesQueue { get; set; } = new();
+    private void QueueContent(Component receiver, byte[] content)
+    {
+        if (IsCompressingEnabled)
+        {
+             (content, var timeToCompress) = content.CompressAndMeasure();
+             _context.TimeToCompress = timeToCompress;
+             _context.ChangeState(ClientState.CompressingData);
+        }
+
+        var messagesToSent = content.Chunk(MaxPacketSize)
+            .Select(chunk => new Message(IP, receiver.IP, chunk, IP, false, IsCompressingEnabled))
+            .ToArray();
+            
+        messagesToSent[^1].IsFinalMessage = true;
+        foreach (var message in messagesToSent)
+        {
+            _messagesQueue.Enqueue(message);
+        }
+    }
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
         // Обновление метрики сообщения
         currentMessage.UpdateMessageState(MessageProcessingState.Received, "Client", IP);
         
-        if (MessagesQueue.Count != 0)
+        if (_messagesQueue.Count != 0)
             _context.ChangeState(ClientState.SendingData);
         else
             _context.ChangeState(ClientState.ProcessingData);

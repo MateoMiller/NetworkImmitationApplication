@@ -40,6 +40,9 @@
             <TextBlock Text="Размер пакета в байтах:"/>
             <TextBox Text="{Binding DataSizeInBytes, UpdateSourceTrigger=PropertyChanged}" 
                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+            <CheckBox Content="Сжимать трафик?" 
+                      IsChecked="{Binding IsCompressingEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CommonIpAddressTemplate}" />
             <StackPanel
                 Visibility="{Binding ClientMode, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=FileTransfer}">
