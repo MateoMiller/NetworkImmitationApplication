@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkImitator", "NetworkImitator\NetworkImitator.csproj", "{5CA5B05E-B5EE-4CE5-A5EB-8C6816E5D36B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{307A17B0-DC2B-4F88-B689-481D81542D66}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{5CA5B05E-B5EE-4CE5-A5EB-8C6816E5D36B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CA5B05E-B5EE-4CE5-A5EB-8C6816E5D36B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CA5B05E-B5EE-4CE5-A5EB-8C6816E5D36B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{307A17B0-DC2B-4F88-B689-481D81542D66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{307A17B0-DC2B-4F88-B689-481D81542D66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{307A17B0-DC2B-4F88-B689-481D81542D66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{307A17B0-DC2B-4F88-B689-481D81542D66}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
