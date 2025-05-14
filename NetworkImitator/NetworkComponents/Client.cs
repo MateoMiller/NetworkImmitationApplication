@@ -12,7 +12,6 @@ namespace NetworkImitator.NetworkComponents;
 
 public partial class Client : Component
 {
-    private ClientState _state = ClientState.ProcessingData;
     private TimeSpan _timeSinceLastSendPacket = TimeSpan.Zero;
 
     [ObservableProperty] private int _sendingPacketPeriod;
@@ -26,6 +25,8 @@ public partial class Client : Component
     private byte[] _fileData;
     private int _currentFilePosition;
     private bool FileTransferCompleted => FileTransferProgress >= 100;
+    
+    private readonly ClientContext _context;
 
     private ClientMode _clientMode = ClientMode.FileTransfer;
     public ClientMode ClientMode
@@ -36,9 +37,9 @@ public partial class Client : Component
             if (_clientMode != value)
             {
                 _clientMode = value;
-                if (_clientMode == ClientMode.Ping && _state == ClientState.WaitingForResponse)
+                if (_clientMode == ClientMode.Ping && _context.State == ClientState.WaitingForResponse)
                 {
-                    _state = ClientState.ProcessingData;
+                    _context.ChangeState(ClientState.ProcessingData);
                 }
                 OnPropertyChanged();
             }
@@ -78,6 +79,10 @@ public partial class Client : Component
         X = x;
         Y = y;
         SendingPacketPeriod = sendingPacketPeriodInMs;
+        _context = new ClientContext(ClientState.ProcessingData)
+        {
+            TimeToProcessData = TimeSpan.FromMilliseconds(sendingPacketPeriodInMs)
+        };
     }
 
     public override BitmapImage Image => new(Images.PcImageUri);
@@ -93,40 +98,35 @@ public partial class Client : Component
 
     public override void ProcessTick(TimeSpan elapsed)
     {
-        switch (_state)
+        _context.ProcessTick(elapsed);
+
+        switch (_context.State)
         {
-            case ClientState.ProcessingData:
-                _timeSinceLastSendPacket += elapsed;
-                if (_timeSinceLastSendPacket.TotalMilliseconds >= SendingPacketPeriod)
+            case ClientState.ProcessedData or ClientState.SendingData:
+                foreach (var connection in Connections.Where(c => c.IsActive))
                 {
-                    _timeSinceLastSendPacket = TimeSpan.Zero;
-
-                    foreach (var connection in Connections.Where(c => c.IsActive))
+                    var receiver = connection.GetOppositeComponent(IP);
+                    if (receiver == null) continue;
+                    if (MessagesQueue.Count == 0)
                     {
-                        var receiver = connection.GetOppositeComponent(IP);
-                        if (receiver == null) continue;
-                        if (MessagesQueue.Count == 0)
-                        {
-                            if (ClientMode == ClientMode.FileTransfer)
-                                UpdateFileTransferProgress();
-                            GetNewMessageQueueForTransfer(receiver);
-                        }
+                        if (ClientMode == ClientMode.FileTransfer)
+                            UpdateFileTransferProgress();
+                        GetNewMessageQueueForTransfer(receiver);
+                    }
 
-                        if (!MessagesQueue.TryDequeue(out var message))
-                        {
-                            continue;
-                        }
+                    if (!MessagesQueue.TryDequeue(out var message))
+                    {
+                        continue;
+                    }
 
-                        connection.TransferData(message);
-                        
-                        if (ClientMode is ClientMode.Http or ClientMode.FileTransfer)
-                        {
-                            _state = ClientState.WaitingForResponse;
-                        }
+                    connection.TransferData(message);
+
+                    if (ClientMode is ClientMode.Http or ClientMode.FileTransfer)
+                    {
+                        _context.ChangeState(ClientState.WaitingForResponse);
                     }
                 }
                 break;
-                
             case ClientState.WaitingForResponse:
                 break;
         }
@@ -143,12 +143,13 @@ public partial class Client : Component
 
             var chunkSize = Math.Min(FileSizeBytes - _currentFilePosition, DataSizeInBytes);
             var chunk = _fileData[_currentFilePosition..(_currentFilePosition + chunkSize)];
-            var compressedChuck = CompressionUtil.Compress(chunk);
+            var (compressedChuck, timeToCompress) = chunk.CompressAndMeasure();
             var messagesToSent = compressedChuck.Chunk(MaxPacketSize)
                 .Select(x => new Message(IP, receiver.IP, x, IP, false, true))
                 .ToArray();
             messagesToSent[^1].IsFinalMessage = true;
             MessagesQueue = new Queue<Message>(messagesToSent);
+            _context.TimeToCompress = timeToCompress;
             
             _currentFilePosition += chunkSize;
 
@@ -164,16 +165,58 @@ public partial class Client : Component
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
-        _state = ClientState.ProcessingData;
+        if (MessagesQueue.Count != 0)
+            _context.ChangeState(ClientState.SendingData);
+        else
+            _context.ChangeState(ClientState.ProcessingData);
     }
     
     public override void OnConnectionDisconnected(Connection connection)
     {
-        if (_state == ClientState.WaitingForResponse)
+        if (_context.State == ClientState.WaitingForResponse)
         {
-            _state = ClientState.ProcessingData;
+            _context.ChangeState(ClientState.ProcessingData);
         }
     }
 
     private const int MaxPacketSize = 65535;
+    
+    private class ClientContext
+    {
+        public ClientState State { get; private set; }
+        public TimeSpan TimeInCurrentState { get; private set; } = TimeSpan.Zero;
+        public TimeSpan TotalElapsedTime { get; private set; } = TimeSpan.Zero;
+        public TimeSpan TimeToCompress { get; set; } = TimeSpan.Zero;
+        public TimeSpan TimeToProcessData { get; set; } = TimeSpan.Zero;
+
+        public ClientContext(ClientState initialState)
+        {
+            State = initialState;
+        }
+        
+        public void ChangeState(ClientState newState)
+        {
+            if (State != newState)
+            {
+                State = newState;
+                TimeInCurrentState = TimeSpan.Zero;
+            }
+        }
+        
+        public void ProcessTick(TimeSpan elapsed)
+        {
+            TimeInCurrentState += elapsed;
+            TotalElapsedTime += elapsed;
+
+            if (State == ClientState.CompressingData && TimeInCurrentState >= TimeToCompress)
+            {
+                State = ClientState.SendingData;
+            }
+
+            if (State == ClientState.ProcessingData && TimeInCurrentState >= TimeToProcessData)
+            {
+                State = ClientState.ProcessedData;
+            }
+        }
+    }
 }

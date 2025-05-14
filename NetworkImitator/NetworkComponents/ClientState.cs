@@ -3,5 +3,8 @@
 public enum ClientState
 {
     ProcessingData,
-    WaitingForResponse
+    ProcessedData,
+    CompressingData,
+    SendingData,
+    WaitingForResponse,
 }

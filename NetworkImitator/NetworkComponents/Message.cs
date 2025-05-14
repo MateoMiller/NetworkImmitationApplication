@@ -2,6 +2,7 @@
 
 public record Message
 {
+    public int MessageId { get; set; } = Guid.NewGuid().GetHashCode();
     public string FromIP { get; set; }
     public string OriginalSenderIp { get; }
     public string ToIP { get; set; }

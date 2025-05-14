@@ -39,40 +39,15 @@ public static class CompressionUtil
         return (decompressedData, stopwatch.Elapsed);
     }
 
-    /// <summary>
-    /// Создает сжатое сообщение на основе исходного контента
-    /// </summary>
-    public static Message CreateCompressedMessage(string fromIP, string toIP, byte[] content, string originalSenderIp)
+    public static (byte[] compressedData, TimeSpan Elapsed) CompressAndMeasure(this byte[] compressedData)
     {
-        var originalSize = content.Length;
-        var compressedContent = Compress(content);
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
         
-        // Сжимаем только если это дает выигрыш в размере
-        if (compressedContent.Length < originalSize)
-        {
-            return new Message(fromIP, toIP, compressedContent, originalSenderIp, true, true);
-        }
+        var decompressedData = Compress(compressedData);
         
-        // Иначе отправляем без сжатия
-        return new Message(fromIP, toIP, content, originalSenderIp);
-    }
-    
-    
-    /// <summary>
-    /// Распаковывает сжатое сообщение, если оно сжато (без измерения времени)
-    /// </summary>
-    public static Message DecompressMessageIfNeeded(Message message)
-    {
-        if (!message.IsCompressed)
-        {
-            return message;
-        }
-        
-        byte[] decompressedContent = Decompress(message.Content);
-        return new Message(
-            message.FromIP, 
-            message.ToIP, 
-            decompressedContent, 
-            message.OriginalSenderIp);
+        stopwatch.Stop();
+
+        return (decompressedData, stopwatch.Elapsed);
     }
 }
