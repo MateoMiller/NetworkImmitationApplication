@@ -11,9 +11,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _timer;
-    private readonly TimeSpan _updateUiTime = TimeSpan.FromMilliseconds(16);
-
-    private const int UpdatesPerOneUiRedraw = 100;
+    private readonly TimeSpan _updateUiTime = TimeSpan.FromMilliseconds(10);
 
     public MainWindow()
     {
@@ -35,7 +33,7 @@ public partial class MainWindow : Window
     private void TimerTick(object? sender, EventArgs e)
     {
         //Можно сделать await Task.Run(() => _viewModel.Update(UpdateUITime));
-        _viewModel.Update(_updateUiTime, UpdatesPerOneUiRedraw);
+        _viewModel.Update(_updateUiTime);
         NetworkCanvas.RedrawEverything();
     }
 

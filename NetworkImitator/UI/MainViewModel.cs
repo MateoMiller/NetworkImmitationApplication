@@ -16,21 +16,24 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<Component> Components { get; } = [];
     public ObservableCollection<Connection> Connections { get; } = [];
     public Connection? TempConnection { get; set; }
+    public TimeSpan ElapsedTime { get; set; } = TimeSpan.Zero;
     
     [ObservableProperty] private Component? _selectedComponent;
     [ObservableProperty] private Connection? _selectedConnection;
     [ObservableProperty] private bool _isPaused;
+    [ObservableProperty] private int _stepsPerOneUpdate = 100;
+    [ObservableProperty] private double _realtimeSpeedModifier = 1.0;
 
     public bool CanEditSettings => IsPaused;
 
-    public void Update(TimeSpan totalElapsed, int updatesPerOneUiRedraw)
+    public void Update(TimeSpan totalElapsed)
     {
         if (IsPaused)
             return;
 
-        var stepDuration = TimeSpan.FromMilliseconds(totalElapsed.TotalMilliseconds / updatesPerOneUiRedraw);
+        var stepDuration = RealtimeSpeedModifier * totalElapsed / StepsPerOneUpdate;
 
-        for (var i = 0; i < updatesPerOneUiRedraw; i++)
+        for (var i = 0; i < StepsPerOneUpdate; i++)
         {
             foreach (var component in Components)
             {
@@ -41,6 +44,7 @@ public partial class MainViewModel : ObservableObject
             {
                 connection.ProcessTick(stepDuration);
             }
+            ElapsedTime += stepDuration;
         }
     }
     

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="40" d:DesignWidth="800">
+             d:DesignHeight="40" d:DesignWidth="1800">
     <Border Height="40" VerticalAlignment="Top">
         <Grid>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
@@ -26,14 +26,32 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button Command="{Binding SaveMetricsCommand}" Width="120" Height="28" Content="Сохранить метрики">
+                
+                <StackPanel Orientation="Vertical" Margin="10,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <TextBlock Text="Модификатор скорости симуляции:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Slider Width="100" Minimum="0.1" Maximum="10" TickFrequency="0.1" 
+                                IsSnapToTickEnabled="True" Value="{Binding RealtimeSpeedModifier}"/>
+                        <TextBlock Text="{Binding RealtimeSpeedModifier, StringFormat={}{0:F1}}" 
+                                   VerticalAlignment="Center" Margin="5,0,0,0" Width="25"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                        <TextBlock Text="Шагов за одно обновление:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Slider Width="80" Minimum="1" Maximum="1000" TickFrequency="10" 
+                                IsSnapToTickEnabled="True" Value="{Binding StepsPerOneUpdate}"/>
+                        <TextBlock Text="{Binding StepsPerOneUpdate}" 
+                                   VerticalAlignment="Center" Margin="5,0,0,0" Width="25"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Text="Имитатор сетевого взаимодействия" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16"/>
+                <Button Command="{Binding SaveMetricsCommand}" Margin="50 0" Width="120" Height="28" Content="Сохранить метрики">
                     <Button.Style>
                         <Style TargetType="Button">
                         </Style>
                     </Button.Style>
                 </Button>
             </StackPanel>
-            <TextBlock Text="Имитатор сетевого взаимодействия" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16"/>
+            
         </Grid>
     </Border>
 </UserControl>
