@@ -81,6 +81,7 @@ namespace NetworkImitator.NetworkComponents
                         ToIP = serverIp
                     };
                     connection.TransferData(modifiedMessage);
+                    //Если IsFinal, то удаляем маппинг
                 }
                 else
                 {

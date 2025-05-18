@@ -22,13 +22,13 @@ public partial class Client : Component
     [ObservableProperty] private int _fileSizeBytes;
     [ObservableProperty] private bool _isCompressingEnabled;
 
-    private byte[] _fileData;
-    private int _currentFilePosition;
+    internal byte[] _fileData;
+    internal int _currentFilePosition;
     private bool FileTransferCompleted => FileTransferProgress >= 100;
-    private readonly Queue<Message> _messagesQueue = new();
-    private readonly ClientContext _context;
+    internal readonly Queue<Message> _messagesQueue = new();
+    internal readonly ClientContext _context;
 
-    private ClientMode _clientMode = ClientMode.FileTransfer;
+    private ClientMode _clientMode = ClientMode.Ping;
     public ClientMode ClientMode
     {
         get => _clientMode;
@@ -87,7 +87,7 @@ public partial class Client : Component
 
     public override BitmapImage Image => new(Images.PcImageUri);
 
-    private void UpdateFileTransferProgress()
+    internal void UpdateFileTransferProgress()
     {
         FileTransferProgress = (double)_currentFilePosition / FileSizeBytes * 100;
 
@@ -123,13 +123,16 @@ public partial class Client : Component
 
                     connection.TransferData(message);
 
-                    if (ClientMode is ClientMode.Http or ClientMode.FileTransfer)
+                    switch (ClientMode)
                     {
-                        _context.ChangeState(ClientState.WaitingForResponse);
+                        case ClientMode.Http or ClientMode.FileTransfer:
+                            _context.ChangeState(ClientState.WaitingForResponse);
+                            break;
+                        case ClientMode.Ping:
+                            _context.ChangeState(ClientState.ProcessingData);
+                            break;
                     }
                 }
-                break;
-            case ClientState.WaitingForResponse:
                 break;
         }
 
@@ -151,7 +154,7 @@ public partial class Client : Component
         MetricsCollector.Instance.AddClientMetrics(clientMetrics);
     }
 
-    private void UpdateMessageQueueForTransfer(Component receiver)
+    internal void UpdateMessageQueueForTransfer(Component receiver)
     {
         if (ClientMode == ClientMode.FileTransfer)
         {
@@ -173,7 +176,7 @@ public partial class Client : Component
         QueueContent(receiver, content);
     }
 
-    private void QueueContent(Component receiver, byte[] content)
+    internal void QueueContent(Component receiver, byte[] content)
     {
         if (IsCompressingEnabled)
         {
@@ -195,7 +198,6 @@ public partial class Client : Component
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
-        // Обновление метрики сообщения
         currentMessage.UpdateMessageState(MessageProcessingState.Received, "Client", IP);
         
         if (_messagesQueue.Count != 0)
@@ -212,9 +214,9 @@ public partial class Client : Component
         }
     }
 
-    private const int MaxPacketSize = 65535;
+    internal const int MaxPacketSize = 65535;
     
-    private class ClientContext
+    internal class ClientContext
     {
         public ClientState State { get; private set; }
         public TimeSpan TimeInCurrentState { get; private set; } = TimeSpan.Zero;

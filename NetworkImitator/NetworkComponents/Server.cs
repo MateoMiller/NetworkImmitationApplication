@@ -37,7 +37,7 @@ public partial class Server : Component
 
         if (message is { IsFinalMessage: false, IsCompressed: true })
         {
-            //ACK. Возможно для Ping не надо делать. TODO
+            //ACK. TODO. Не критично. Для Ping не надо делать. 
             var ackMessage = new Message(IP, message.FromIP, "ACK"u8.ToArray(), message.OriginalSenderIp);
             message.UpdateMessageState(MessageProcessingState.Acknowledged, "Server", IP);
             connection.TransferData(ackMessage);
@@ -192,6 +192,7 @@ public partial class Server : Component
                 else
                 {
                     State = ProcessingState.ProcessingData;
+                    //TODO Зря зануляем время обработки
                     CurrentStateElapsedTime = TimeSpan.Zero;
                     
                     // Обновление метрик сообщения

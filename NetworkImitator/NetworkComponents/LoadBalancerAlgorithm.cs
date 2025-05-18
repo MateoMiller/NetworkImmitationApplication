@@ -3,5 +3,6 @@
 public enum LoadBalancerAlgorithm
 {
     RoundRobin,
-    LeastConnections
+    LeastConnections,
+    IpHashing
 }
