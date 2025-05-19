@@ -6,14 +6,15 @@ namespace NetworkImitator.NetworkComponents.Metrics;
 public class ServerMetrics
 {
     public string ServerIp { get; }
+    public TimeSpan TotalElapsedTime { get; set; }
     public int ProcessingLoad { get; set; }
     public int QueuedMessagesCount { get; set; }
     public int TotalLoad { get; set; }
-    public Dictionary<string, Server.ProcessingState> ClientContextStates { get; } = new();
     
-    public ServerMetrics(string serverIp, int processingLoad, int queuedMessagesCount, int totalLoad)
+    public ServerMetrics(string serverIp, TimeSpan totalElapsedTime, int processingLoad, int queuedMessagesCount, int totalLoad)
     {
         ServerIp = serverIp;
+        TotalElapsedTime = totalElapsedTime;
         ProcessingLoad = processingLoad;
         QueuedMessagesCount = queuedMessagesCount;
         TotalLoad = totalLoad;

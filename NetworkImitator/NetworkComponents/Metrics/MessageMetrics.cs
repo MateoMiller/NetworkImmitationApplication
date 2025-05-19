@@ -1,17 +1,22 @@
-﻿using System;
-
-namespace NetworkImitator.NetworkComponents.Metrics;
+﻿namespace NetworkImitator.NetworkComponents.Metrics;
 
 public enum MessageProcessingState
 {
     Created,
     InTransit,
     Received,
-    Processing,
+    Compressing,
     Decompressing,
+    Processing,
     Processed,
-    Acknowledged,
-    Failed
+}
+
+public enum MessageProcessor
+{
+    Client,
+    Server,
+    LoadBalancer,
+    Connection
 }
 
 public class MessageMetrics
@@ -20,17 +25,16 @@ public class MessageMetrics
     public string FromIP { get; }
     public string ToIP { get; }
     public string OriginalSenderIp { get; }
-    public MessageProcessingState State { get; set; }
-    public string ProcessorType { get; set; } // "Client" или "Server"
-    public string ProcessorIp { get; set; }
     public int SizeInBytes { get; }
     public bool IsCompressed { get; }
     public bool IsFinalMessage { get; }
-    public DateTime CreatedAt { get; }
-    public DateTime? LastUpdatedAt { get; private set; }
-    public TimeSpan ProcessingTime => LastUpdatedAt.HasValue ? LastUpdatedAt.Value - CreatedAt : TimeSpan.Zero;
-    
-    public MessageMetrics(Message message, MessageProcessingState state, string processorType, string processorIp)
+
+    public MessageProcessingState State { get; set; }
+    public MessageProcessor ProcessorType { get; set; }
+
+    public TimeSpan TotalElapsed { get; }
+
+    public MessageMetrics(Message message, MessageProcessingState state, MessageProcessor processorType, TimeSpan totalElapsed)
     {
         MessageId = message.MessageId;
         FromIP = message.FromIP;
@@ -42,13 +46,6 @@ public class MessageMetrics
         
         State = state;
         ProcessorType = processorType;
-        ProcessorIp = processorIp;
-        CreatedAt = DateTime.Now;
-        UpdateLastActivityTime();
-    }
-
-    private void UpdateLastActivityTime()
-    {
-        LastUpdatedAt = DateTime.Now;
+        TotalElapsed = totalElapsed;
     }
 }

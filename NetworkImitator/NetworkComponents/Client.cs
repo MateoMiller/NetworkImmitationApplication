@@ -119,8 +119,6 @@ public partial class Client : Component
                         continue;
                     }
 
-                    message.UpdateMessageState(MessageProcessingState.InTransit, "Client", IP);
-
                     connection.TransferData(message);
 
                     switch (ClientMode)
@@ -137,6 +135,7 @@ public partial class Client : Component
         }
 
         CollectClientMetrics();
+        CollectMessagesMetrics();
     }
 
     private void CollectClientMetrics()
@@ -144,14 +143,34 @@ public partial class Client : Component
         var clientMetrics = new ClientMetrics(
             IP, 
             _context.State, 
-            _context.TimeInCurrentState,
-            _context.TotalElapsedTime,
+            _context.TimeInCurrentState, 
+            MainViewModel.ElapsedTime,
             _messagesQueue.Count,
             FileTransferProgress,
             FileTransferStatus
         );
         
         MetricsCollector.Instance.AddClientMetrics(clientMetrics);
+    }
+    
+    private void CollectMessagesMetrics()
+    {
+        foreach (var message in _messagesQueue)
+        {
+            var messageState = _context.State switch
+            {
+                ClientState.CompressingData => MessageProcessingState.Compressing,
+                _ => MessageProcessingState.Created,
+            };
+            var metrics = new MessageMetrics(
+                message,
+                messageState,
+                MessageProcessor.Client,
+                MainViewModel.ElapsedTime
+            );
+            
+            MetricsCollector.Instance.AddMessageMetrics(metrics);
+        }
     }
 
     internal void UpdateMessageQueueForTransfer(Component receiver)
@@ -198,8 +217,6 @@ public partial class Client : Component
 
     public override void ReceiveData(Connection connection, Message currentMessage)
     {
-        currentMessage.UpdateMessageState(MessageProcessingState.Received, "Client", IP);
-        
         if (_messagesQueue.Count != 0)
             _context.ChangeState(ClientState.SendingData);
         else
@@ -220,7 +237,6 @@ public partial class Client : Component
     {
         public ClientState State { get; private set; }
         public TimeSpan TimeInCurrentState { get; private set; } = TimeSpan.Zero;
-        public TimeSpan TotalElapsedTime { get; private set; } = TimeSpan.Zero;
         public TimeSpan TimeToCompress { get; set; } = TimeSpan.Zero;
         public TimeSpan TimeToProcessData { get; set; } = TimeSpan.Zero;
 
@@ -241,7 +257,6 @@ public partial class Client : Component
         public void ProcessTick(TimeSpan elapsed)
         {
             TimeInCurrentState += elapsed;
-            TotalElapsedTime += elapsed;
 
             if (State == ClientState.CompressingData && TimeInCurrentState >= TimeToCompress)
             {

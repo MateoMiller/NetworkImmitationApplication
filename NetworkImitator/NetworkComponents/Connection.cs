@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using NetworkImitator.NetworkComponents.Metrics;
 using Point = System.Windows.Point;
 
 namespace NetworkImitator.NetworkComponents;
@@ -10,7 +11,7 @@ public partial class Connection : ObservableObject
     public Component FirstComponent { get; set; }
     public Component SecondComponent { get; set; }
 
-    [ObservableProperty] private int _timeToProcessMs = 50;
+    [ObservableProperty] private double _timeToProcessMs = 50;
     [ObservableProperty] private double _byteTransferTimeMs = 0.1;
     [ObservableProperty] private bool _isSelected;
 
@@ -87,6 +88,18 @@ public partial class Connection : ObservableObject
         }
 
         OnPropertyChanged(nameof(MessagesInTransitCount));
+
+        var elapsedTime = FirstComponent.MainViewModel.ElapsedTime;
+
+        foreach (var messageInTransit in _messagesInTransit)
+        {
+            var metric = new MessageMetrics(messageInTransit.Message, MessageProcessingState.InTransit, MessageProcessor.Connection, elapsedTime);
+            
+            MetricsCollector.Instance.AddMessageMetrics(metric);
+        }
+        
+        var connectionMetrics = new ConnectionMetrics(DisplayName, elapsedTime, _messagesInTransit.Count, _messagesInTransit.Sum(x => x.Message.SizeInBytes));
+        MetricsCollector.Instance.AddConnectionMetrics(connectionMetrics);
     }
 
     public Component? GetComponent(string ip)
