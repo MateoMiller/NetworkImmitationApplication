@@ -11,7 +11,7 @@ public static class RandomExtensions
         var size = 0;
         while (size < totalSize)
         {
-            var newWord = faker.Lorem.Word();
+            var newWord = faker.Random.Word();
             words.Add(newWord);
             size += newWord.Length;
         }
@@ -21,7 +21,7 @@ public static class RandomExtensions
     public static string RandomWord()
     {
         var faker = new Faker();
-        return faker.Lorem.Word();
+        return faker.Random.Word();
     }
 
     public static string RandomIp()

@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using System.Windows;
+using NetworkImitator.Extensions;
+using NetworkImitator.NetworkComponents;
 
 namespace NetworkImitator;
 

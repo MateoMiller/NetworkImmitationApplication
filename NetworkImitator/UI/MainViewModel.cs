@@ -46,6 +46,8 @@ public partial class MainViewModel : ObservableObject
             }
             ElapsedTime += stepDuration;
         }
+        
+        OnPropertyChanged(nameof(ElapsedTime));
     }
     
     public ICommand AddClientCommand { get; }
@@ -54,6 +56,7 @@ public partial class MainViewModel : ObservableObject
     public ICommand AddConnectionCommand { get; }
     public ICommand TogglePauseCommand { get; }
     public ICommand SaveMetricsCommand { get; }
+    public ICommand DeleteSelectedCommand { get; }
 
     public MainViewModel()
     {
@@ -63,37 +66,38 @@ public partial class MainViewModel : ObservableObject
         AddConnectionCommand = new AddConnectionCommand(this);
         TogglePauseCommand = new RelayCommand(TogglePause);
         SaveMetricsCommand = new RelayCommand(SaveMetrics);
+        DeleteSelectedCommand = new RelayCommand(DeleteSelected);
         
         IsPaused = true;
     }
-    
+
+    private void DeleteSelected()
+    {
+        if ((SelectedComponent != null || SelectedConnection != null) && IsPaused)
+        {
+            if (SelectedComponent != null)
+            {
+                Components.Remove(SelectedComponent);
+            }
+            else if (SelectedConnection != null)
+            {
+                Connections.Remove(SelectedConnection);
+            }
+        }
+        else
+        {
+            MessageBox.Show(IsPaused ? "Нельзя удалять компоненты во время выполнения" : "Не выбран компонент для удаления", "Ошибка", 
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void SaveMetrics()
     {
-        var dialog = new SaveFileDialog
-        {
-            Title = "Выберите папку для сохранения метрик",
-            FileName = "metrics", // Заглушка для имени файла
-            Filter = "Все файлы|*.*",
-            CheckFileExists = false,
-            OverwritePrompt = false
-        };
 
-        if (dialog.ShowDialog() == true)
+        if (MetricsCollector.Instance.SaveMetricsToFile())
         {
-            var folderPath = System.IO.Path.GetDirectoryName(dialog.FileName);
-            
-            if (string.IsNullOrEmpty(folderPath))
-            {
-                MessageBox.Show("Не выбрана папка для сохранения", "Ошибка", 
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-            
-            if (MetricsCollector.Instance.SaveMetricsToFile(folderPath))
-            {
-                MessageBox.Show($"Метрики успешно сохранены в папку:\n{folderPath}", 
-                    "Сохранение метрик", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
+            MessageBox.Show($"Метрики успешно сохранены",
+                "Сохранение метрик", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
     

@@ -1,10 +1,20 @@
 ﻿<UserControl x:Class="NetworkImitator.UI.Controls.CommandButtonsPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/NetworkImitator;component/UI/Resources/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+        
+    </UserControl.Resources>
+    
     <StackPanel Margin="5 0 ">
-        <Button Content="Добавить компьютер" Command="{Binding AddClientCommand}" />
-        <Button Content="Добавить сервер" Command="{Binding AddServerCommand}" />
-        <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}" />
-        <Button Content="Добавить ребро" Command="{Binding AddConnectionCommand}" />
+        <Button Content="Добавить клиент" Command="{Binding AddClientCommand}" Style="{StaticResource EditableOnlyWhenPausedStyle}" />
+        <Button Content="Добавить сервер" Command="{Binding AddServerCommand}" Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+        <Button Content="Добавить балансировщик нагрузки" Command="{Binding AddLoadBalancerCommand}" Style="{StaticResource EditableOnlyWhenPausedStyle}" />
+        <Button Content="Добавить соединение" Command="{Binding AddConnectionCommand}" Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
+        <Button Content="Удалить компонент/соединение" Command="{Binding DeleteSelectedCommand}" Style="{StaticResource EditableOnlyWhenPausedStyle}"/>
     </StackPanel>
 </UserControl>

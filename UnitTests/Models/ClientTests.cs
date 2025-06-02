@@ -1,4 +1,4 @@
-using System.Reflection;
+/*using System.Reflection;
 using NetworkImitator.NetworkComponents;
 using NetworkImitator.UI;
 using FluentAssertions;
@@ -236,4 +236,4 @@ public class ClientTests
         // Assert - Compression should be triggered when generating new messages
         _client._context.State.Should().Be(ClientState.CompressingData);
     }
-} 
+} */

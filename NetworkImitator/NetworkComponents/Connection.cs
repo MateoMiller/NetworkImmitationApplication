@@ -11,8 +11,8 @@ public partial class Connection : ObservableObject
     public Component FirstComponent { get; set; }
     public Component SecondComponent { get; set; }
 
-    [ObservableProperty] private double _timeToProcessMs = 50;
-    [ObservableProperty] private double _byteTransferTimeMs = 0.1;
+    [ObservableProperty] private double _timeToProcessMs = 14.491473;
+    [ObservableProperty] private double _byteTransferTimeMs = 0.000188;
     [ObservableProperty] private bool _isSelected;
 
     private bool _isActive = true;
@@ -74,7 +74,7 @@ public partial class Connection : ObservableObject
 
             var totalTransferTimeMs = GetTotalTransferTimeMs(messageInTransit.Message);
 
-            if (messageInTransit.ElapsedTime.TotalMilliseconds >= totalTransferTimeMs)
+            if (messageInTransit.ElapsedTime >= TimeSpan.FromMilliseconds(totalTransferTimeMs))
             {
                 var receiver = FirstComponent.IP == messageInTransit.Message.ToIP ? FirstComponent : SecondComponent;
                 receiver.ReceiveData(this, messageInTransit.Message);
@@ -98,7 +98,7 @@ public partial class Connection : ObservableObject
             MetricsCollector.Instance.AddMessageMetrics(metric);
         }
         
-        var connectionMetrics = new ConnectionMetrics(DisplayName, elapsedTime, _messagesInTransit.Count, _messagesInTransit.Sum(x => x.Message.SizeInBytes));
+        var connectionMetrics = new ConnectionMetrics($"{FirstComponent.IP}->{SecondComponent.IP}", elapsedTime, _messagesInTransit.Count, _messagesInTransit.Sum(x => x.Message.SizeInBytes));
         MetricsCollector.Instance.AddConnectionMetrics(connectionMetrics);
     }
 

@@ -22,8 +22,8 @@ public enum MessageProcessor
 public class MessageMetrics
 {
     public int MessageId { get; }
-    public string FromIP { get; }
-    public string ToIP { get; }
+    //public string FromIP { get; }
+    //public string ToIP { get; }
     public string OriginalSenderIp { get; }
     public int SizeInBytes { get; }
     public bool IsCompressed { get; }
@@ -37,8 +37,8 @@ public class MessageMetrics
     public MessageMetrics(Message message, MessageProcessingState state, MessageProcessor processorType, TimeSpan totalElapsed)
     {
         MessageId = message.MessageId;
-        FromIP = message.FromIP;
-        ToIP = message.ToIP;
+      //  FromIP = message.FromIP;
+       // ToIP = message.ToIP;
         OriginalSenderIp = message.OriginalSenderIp;
         SizeInBytes = message.SizeInBytes;
         IsCompressed = message.IsCompressed;

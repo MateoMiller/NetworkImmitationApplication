@@ -13,8 +13,23 @@ namespace NetworkImitator.NetworkComponents;
 
 public partial class Client : Component
 {
-    [ObservableProperty] private int _sendingPacketPeriod;
-    [ObservableProperty] private int _dataSizeInBytes = 1024;
+    private int _sendingPacketPeriodInMs = 1;
+
+    public int SendingPacketPeriod
+    {
+        get => _sendingPacketPeriodInMs;
+        set
+        {
+            if (value != _sendingPacketPeriodInMs)
+            {
+                _sendingPacketPeriodInMs = value;
+                _context.TimeToProcessData = TimeSpan.FromMilliseconds(value);
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    [ObservableProperty] private int _dataSizeInBytes = 1 * 1024;
 
     [ObservableProperty] private string _filePath;
     [ObservableProperty] private double _fileTransferProgress;
@@ -29,6 +44,9 @@ public partial class Client : Component
     internal readonly ClientContext _context;
 
     private ClientMode _clientMode = ClientMode.Ping;
+    private int _totalMessagesCount;
+    private int _totalMessagesSize;
+
     public ClientMode ClientMode
     {
         get => _clientMode;
@@ -61,6 +79,8 @@ public partial class Client : Component
             {
                 FilePath = dialog.FileName;
                 _fileData = File.ReadAllBytes(FilePath);
+                Console.WriteLine($"File size = {_fileData.Length}");
+                
                 
                 _currentFilePosition = 0;
                 FileTransferProgress = 0;
@@ -74,14 +94,13 @@ public partial class Client : Component
         }
     }
 
-    public Client(double x, double y, int sendingPacketPeriodInMs, MainViewModel viewModel) : base(viewModel, x, y)
+    public Client(double x, double y, MainViewModel viewModel) : base(viewModel, x, y)
     {
         X = x;
         Y = y;
-        SendingPacketPeriod = sendingPacketPeriodInMs;
         _context = new ClientContext(ClientState.ProcessingData)
         {
-            TimeToProcessData = TimeSpan.FromMilliseconds(sendingPacketPeriodInMs)
+            TimeToProcessData = TimeSpan.FromMilliseconds(_sendingPacketPeriodInMs)
         };
     }
 
@@ -114,7 +133,7 @@ public partial class Client : Component
                         UpdateMessageQueueForTransfer(receiver);
                     }
 
-                    if (!_messagesQueue.TryDequeue(out var message))
+                    if (_context.State == ClientState.CompressingData || !_messagesQueue.TryDequeue(out var message))
                     {
                         continue;
                     }
@@ -179,6 +198,8 @@ public partial class Client : Component
         {
             if (_fileData == null || FileTransferCompleted)
             {
+                _context.ChangeState(ClientState.Finished);
+                Console.WriteLine($"{IP} + {_totalMessagesCount} + {_totalMessagesSize}");
                 return;
             }
 
@@ -204,14 +225,18 @@ public partial class Client : Component
              _context.ChangeState(ClientState.CompressingData);
         }
 
+        var identification = Random.Shared.Next();
+        
         var messagesToSent = content.Chunk(MaxPacketSize)
-            .Select(chunk => new Message(IP, receiver.IP, chunk, IP, false, IsCompressingEnabled))
+            .Select(chunk => new Message(identification, IP, receiver.IP, chunk, IP, false, IsCompressingEnabled))
             .ToArray();
             
         messagesToSent[^1].IsFinalMessage = true;
         foreach (var message in messagesToSent)
         {
             _messagesQueue.Enqueue(message);
+            _totalMessagesCount += 1;
+            _totalMessagesSize += message.SizeInBytes;
         }
     }
 
@@ -260,12 +285,12 @@ public partial class Client : Component
 
             if (State == ClientState.CompressingData && TimeInCurrentState >= TimeToCompress)
             {
-                State = ClientState.SendingData;
+                ChangeState(ClientState.SendingData);
             }
 
             if (State == ClientState.ProcessingData && TimeInCurrentState >= TimeToProcessData)
             {
-                State = ClientState.ProcessedData;
+                ChangeState(ClientState.ProcessedData);
             }
         }
     }

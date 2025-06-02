@@ -25,7 +25,7 @@ namespace NetworkImitator.NetworkComponents
             if (_servers.Count == 0)
             {
                 Console.WriteLine("LoadBalancer: No servers available to handle the request.");
-                connection.TransferData(new Message(IP, message.FromIP, "No servers available to handle the request."u8.ToArray(), message.OriginalSenderIp));
+                connection.TransferData(new Message(Random.Shared.Next(), IP, message.FromIP, "No servers available to handle the request."u8.ToArray(), message.OriginalSenderIp));
                 return;
             }
 
@@ -48,7 +48,7 @@ namespace NetworkImitator.NetworkComponents
             string? serverIp = null;
             if (_clientServerMapping.TryGetValue(message.FromIP, out var mappedServerIp))
             {
-                if (_servers.Any(s => s.IP == mappedServerIp))
+                if (_servers.Any(s => s.IP == mappedServerIp) && !message.IsFinalMessage)
                 {
                     serverIp = mappedServerIp;
                 }
@@ -60,7 +60,8 @@ namespace NetworkImitator.NetworkComponents
             
             if (serverIp == null)
             {
-                var server = SelectServer();
+                //TODO Я заочно написал, что здесь есть метрика
+                var server = SelectServer(message);
                 if (server != null)
                 {
                     serverIp = server.IP;
@@ -106,23 +107,19 @@ namespace NetworkImitator.NetworkComponents
             else
             {
                 Console.WriteLine($"LoadBalancer: Failed to find active connection to client {message.OriginalSenderIp}");
-
-                if (_clientServerMapping.Remove(message.OriginalSenderIp))
-                {
-                    Console.WriteLine($"LoadBalancer: соединение с клиентом {message.OriginalSenderIp} неактивно, маппинг удален");
-                }
             }
         }
 
         public override void ProcessTick(TimeSpan elapsed)
         { }
 
-        private Server? SelectServer()
+        private Server? SelectServer(Message message)
         {
             return Algorithm switch
             {
                 LoadBalancerAlgorithm.RoundRobin => SelectRoundRobin(),
                 LoadBalancerAlgorithm.LeastConnections => SelectLeastConnections(),
+                LoadBalancerAlgorithm.IpHashing => SelectIpHashing(message),
                 _ => throw new InvalidOperationException($"Unknown algorithm: {Algorithm}")
             };
         }
@@ -140,6 +137,14 @@ namespace NetworkImitator.NetworkComponents
         {
             return _servers.OrderBy(s => s.GetTotalLoad).FirstOrDefault();
         }
+        
+        private Server? SelectIpHashing(Message message)
+        {
+            if (_servers.Count == 0)
+                return null;
+            var hash = message.FromIP.GetHashCode(); 
+            return _servers[Math.Abs(hash) % _servers.Count];
+        }
 
         protected override void OnNewConnection(Connection connection)
         {
@@ -151,51 +156,6 @@ namespace NetworkImitator.NetworkComponents
             else if (connection.SecondComponent is Server server2)
             {
                 RegisterServer(server2);
-            }
-        }
-        
-        public override void OnConnectionDisconnected(Connection connection)
-        {
-            // Проверяем, был ли это сервер
-            if (connection.FirstComponent is Server server)
-            {
-                HandleServerDisconnection(server);
-            }
-            else if (connection.SecondComponent is Server server2)
-            {
-                HandleServerDisconnection(server2);
-            }
-            
-            // Проверяем, был ли это клиент
-            var clientIp = connection.FirstComponent.IP != IP ? connection.FirstComponent.IP : 
-                          connection.SecondComponent.IP != IP ? connection.SecondComponent.IP : null;
-            
-            if (clientIp != null && _clientServerMapping.ContainsKey(clientIp))
-            {
-                _clientServerMapping.Remove(clientIp);
-                Console.WriteLine($"LoadBalancer: соединение с клиентом {clientIp} разорвано, маппинг удален");
-            }
-        }
-        
-        private void HandleServerDisconnection(Server server)
-        {
-            // Удаляем сервер из списка доступных
-            if (_servers.Contains(server))
-            {
-                _servers.Remove(server);
-                Console.WriteLine($"LoadBalancer: сервер {server.IP} удален из списка доступных. Осталось серверов: {_servers.Count}");
-                
-                // Удаляем маппинги к этому серверу
-                var clientsToRemove = _clientServerMapping
-                    .Where(kvp => kvp.Value == server.IP)
-                    .Select(kvp => kvp.Key)
-                    .ToList();
-                
-                foreach (var clientIp in clientsToRemove)
-                {
-                    _clientServerMapping.Remove(clientIp);
-                    Console.WriteLine($"LoadBalancer: удален маппинг клиента {clientIp} к отключенному серверу {server.IP}");
-                }
             }
         }
         

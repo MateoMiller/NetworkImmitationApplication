@@ -43,7 +43,7 @@ namespace NetworkImitator.UI
             {
                 var newPosition = e.GetPosition(null);
                 Component.X = newPosition.X - Width / 2;
-                Component.Y = newPosition.Y - Height / 2;
+                Component.Y = newPosition.Y - Height;
             }
         }
 
