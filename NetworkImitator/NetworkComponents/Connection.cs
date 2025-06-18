@@ -53,7 +53,7 @@ public partial class Connection : ObservableObject
             return Brushes.Blue;
         if (!IsActive)
             return Brushes.Gray;
-        return new SolidColorBrush(GetColor(_messagesInTransit.Count, 4));
+        return new SolidColorBrush(GetColor(_messagesInTransit.Count, 15));
     }
 
     private double GetTotalTransferTimeMs(Message message)

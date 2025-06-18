@@ -17,7 +17,7 @@ namespace NetworkImitator.NetworkComponents.Metrics
         private readonly ConcurrentQueue<MessageMetrics> _messageMetricsBuffer = new();
         private readonly ConcurrentQueue<ConnectionMetrics> _connectionMetricsBuffer = new();
 
-        private const int BATCH_SIZE = 10000;
+        private const int BATCH_SIZE = 5000;
         private readonly Timer _flushTimer;
         private readonly object _flushLock = new();
 
@@ -36,7 +36,7 @@ namespace NetworkImitator.NetworkComponents.Metrics
 
             InitializeDatabase();
             
-            _flushTimer = new Timer(AutoFlush, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            _flushTimer = new Timer(AutoFlush, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(0.25));
         }
 
         private void InitializeDatabase()
@@ -47,8 +47,9 @@ namespace NetworkImitator.NetworkComponents.Metrics
             var createTablesCommand = connection.CreateCommand();
             createTablesCommand.CommandText = @"
                 CREATE TABLE IF NOT EXISTS ClientMetrics (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ClientIp TEXT NOT NULL,
-                    State TEXT NOT NULL,
+                    State INTEGER NOT NULL,
                     TimeInCurrentStateNs INTEGER NOT NULL,
                     TotalElapsedTimeNs INTEGER NOT NULL,
                     QueuedMessagesCount INTEGER NOT NULL,
@@ -57,6 +58,7 @@ namespace NetworkImitator.NetworkComponents.Metrics
                 );
 
                 CREATE TABLE IF NOT EXISTS ServerMetrics (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ServerIp TEXT NOT NULL,
                     TotalElapsedTimeNs INTEGER NOT NULL,
                     ProcessingLoad INTEGER NOT NULL,
@@ -65,10 +67,11 @@ namespace NetworkImitator.NetworkComponents.Metrics
                 );
 
                 CREATE TABLE IF NOT EXISTS MessageMetrics (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     MessageId INTEGER NOT NULL,
                     OriginalSenderIp TEXT NOT NULL,
-                    State TEXT NOT NULL,
-                    ProcessorType TEXT NOT NULL,
+                    State INTEGER NOT NULL,
+                    ProcessorType INTEGER NOT NULL,
                     SizeInBytes INTEGER NOT NULL,
                     IsCompressed INTEGER NOT NULL,
                     IsFinalMessage INTEGER NOT NULL,
@@ -76,6 +79,7 @@ namespace NetworkImitator.NetworkComponents.Metrics
                 );
 
                 CREATE TABLE IF NOT EXISTS ConnectionMetrics (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ConnectionName TEXT NOT NULL,
                     ElapsedTimeNs INTEGER NOT NULL,
                     MessagesCount INTEGER NOT NULL,
@@ -162,21 +166,18 @@ namespace NetworkImitator.NetworkComponents.Metrics
 
             if (metrics.Count == 0) return;
 
-            var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            
             var sb = new StringBuilder();
             sb.AppendLine("INSERT INTO ClientMetrics (ClientIp, State, TimeInCurrentStateNs, TotalElapsedTimeNs, QueuedMessagesCount, FileTransferProgress, FileTransferStatus) VALUES");
-            
             for (var i = 0; i < metrics.Count; i++)
             {
-                var metric = metrics[i];
-                sb.AppendLine($"('{metric.ClientIp}', '{metric.State}', {metric.TimeInCurrentState.TotalNanoseconds}, {metric.TotalElapsedTime.TotalNanoseconds}, {metric.QueuedMessagesCount}, {metric.FileTransferProgress}, '{metric.FileTransferStatus.Replace("'", "''")}')");
-                
+                var m = metrics[i];
+                sb.Append($"('{m.ClientIp}', {(int)m.State}, {m.TimeInCurrentState.TotalNanoseconds}, {m.TotalElapsedTime.TotalNanoseconds}, {m.QueuedMessagesCount}, '{m.FileTransferProgress}', '{m.FileTransferStatus}')");
                 if (i < metrics.Count - 1)
                     sb.Append(",");
             }
-
+            sb.Append(";");
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
             command.CommandText = sb.ToString();
             command.ExecuteNonQuery();
         }
@@ -193,21 +194,18 @@ namespace NetworkImitator.NetworkComponents.Metrics
 
             if (metrics.Count == 0) return;
 
-            var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            
             var sb = new StringBuilder();
             sb.AppendLine("INSERT INTO ServerMetrics (ServerIp, TotalElapsedTimeNs, ProcessingLoad, QueuedMessagesCount, TotalLoad) VALUES");
-            
             for (int i = 0; i < metrics.Count; i++)
             {
-                var metric = metrics[i];
-                sb.AppendLine($"('{metric.ServerIp}', {metric.TotalElapsedTime.TotalNanoseconds}, {metric.ProcessingLoad}, {metric.QueuedMessagesCount}, {metric.TotalLoad})");
-                
+                var m = metrics[i];
+                sb.Append($"('{m.ServerIp}', {m.TotalElapsedTime.TotalNanoseconds}, {m.ProcessingLoad}, {m.QueuedMessagesCount}, {m.TotalLoad})");
                 if (i < metrics.Count - 1)
                     sb.Append(",");
             }
-
+            sb.Append(";");
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
             command.CommandText = sb.ToString();
             command.ExecuteNonQuery();
         }
@@ -224,21 +222,18 @@ namespace NetworkImitator.NetworkComponents.Metrics
 
             if (metrics.Count == 0) return;
 
-            var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            
             var sb = new StringBuilder();
             sb.AppendLine("INSERT INTO MessageMetrics (MessageId, OriginalSenderIp, State, ProcessorType, SizeInBytes, IsCompressed, IsFinalMessage, TotalElapsedNs) VALUES");
-            
             for (int i = 0; i < metrics.Count; i++)
             {
-                var metric = metrics[i];
-                sb.AppendLine($"({metric.MessageId}, '{metric.OriginalSenderIp}', '{metric.State}', '{metric.ProcessorType}', {metric.SizeInBytes}, {(metric.IsCompressed ? 1 : 0)}, {(metric.IsFinalMessage ? 1 : 0)}, {metric.TotalElapsed.TotalNanoseconds})");
-                
+                var m = metrics[i];
+                sb.Append($"({m.MessageId}, '{m.OriginalSenderIp}', {(int)m.State}, {(int)m.ProcessorType}, {m.SizeInBytes}, {(m.IsCompressed ? 1 : 0)}, {(m.IsFinalMessage ? 1 : 0)}, {m.TotalElapsed.TotalNanoseconds})");
                 if (i < metrics.Count - 1)
                     sb.Append(",");
             }
-
+            sb.Append(";");
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
             command.CommandText = sb.ToString();
             command.ExecuteNonQuery();
         }
@@ -255,21 +250,18 @@ namespace NetworkImitator.NetworkComponents.Metrics
 
             if (metrics.Count == 0) return;
 
-            var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            
             var sb = new StringBuilder();
             sb.AppendLine("INSERT INTO ConnectionMetrics (ConnectionName, ElapsedTimeNs, MessagesCount, TotalMessagesSize) VALUES");
-            
             for (int i = 0; i < metrics.Count; i++)
             {
-                var metric = metrics[i];
-                sb.AppendLine($"('{metric.ConnectionName}', {metric.ElapsedTime.TotalNanoseconds}, {metric.MessagesCount}, {metric.TotalMessagesSize})");
-                
+                var m = metrics[i];
+                sb.Append($"('{m.ConnectionName}', {m.ElapsedTime.TotalNanoseconds}, {m.MessagesCount}, {m.TotalMessagesSize})");
                 if (i < metrics.Count - 1)
                     sb.Append(",");
             }
-
+            sb.Append(";");
+            var command = connection.CreateCommand();
+            command.Transaction = transaction;
             command.CommandText = sb.ToString();
             command.ExecuteNonQuery();
         }
@@ -280,7 +272,7 @@ namespace NetworkImitator.NetworkComponents.Metrics
             {
                 FlushAllMetrics();
                 _flushTimer.Dispose();
-                
+
                 return true;
             }
             catch (Exception ex)

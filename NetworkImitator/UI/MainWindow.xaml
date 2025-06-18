@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:NetworkImitator.UI.Controls"
         x:Name="MainWindowRoot"
-        Title="Graph App" Height="600" Width="1200">
+        Title="Имитатор сетевого взаимодействия" Height="600" Width="1200">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -27,7 +27,17 @@ public partial class MainWindow : Window
         _timer.Start();
         KeyDown += OnKeyDown;
         Loaded += (_, _) => Keyboard.Focus(this);
-        Closed += (_, _) => _timer.Stop();
+
+        Closed += (_, _) => 
+        {
+            _timer.Stop();
+            _viewModel.Dispose();
+        };
+        
+        Application.Current.SessionEnding += (_, _) => 
+        {
+            _viewModel.Dispose();
+        };
     }
 
     private void TimerTick(object? sender, EventArgs e)

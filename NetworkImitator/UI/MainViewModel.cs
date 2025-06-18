@@ -93,12 +93,16 @@ public partial class MainViewModel : ObservableObject
 
     private void SaveMetrics()
     {
-
         if (MetricsCollector.Instance.SaveMetricsToFile())
         {
-            MessageBox.Show($"Метрики успешно сохранены",
+            MessageBox.Show($"Метрики успешно сохранены в базу данных SQLite",
                 "Сохранение метрик", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+    }
+    
+    public void Dispose()
+    {
+        MetricsCollector.Instance.SaveMetricsToFile();
     }
     
     private void TogglePause()
